@@ -4,21 +4,18 @@
 
 (
 s = Server.local;
-//s.options.outDevice = "Built-in Output";
+s.options.outDevice = "Built-in Output";
 //s.options.outDevice = "Scarlett 2i2 USB";
 //s.options.outDevice = "MOMENTUM M2 AEBT";
 //s.options.outDevice = "Soundflower (2ch)";
-s.options.outDevice = "Soundflower Aggregate";
-s.options.numOutputBusChannels = 66;
+//s.options.outDevice = "Soundflower Aggregate";
+//s.options.numOutputBusChannels = 66;
 s.options.blockSize = 128;
 s.options.sampleRate = 96000;
 s.options.numBuffers = 2056;
 s.options.memSize = 2.pow(20);
 s.dumpOSC(1);
 )
-
-
-
 
 (
 SynthDef(\staticControl, {
@@ -183,6 +180,37 @@ SynthDef(\resonantFilter, {
 	Out.ar(out, sig);
 }).add;
 
+SynthDef(\highPassFilter, {
+	arg dur = 1, in = 0, freqBus = 0, out = 0;
+	var input, sig, freq;
+	Line.kr(dur:dur, doneAction:2);
+	input = In.ar(in, 1);
+	freq = In.kr(freqBus, 1);
+	sig = HPF.ar(input, freq);
+	Out.ar(out, sig);
+}).add;
+
+SynthDef(\lowPassFilter, {
+	arg dur = 1, in = 0, freqBus = 0, out = 0;
+	var input, sig, freq;
+	Line.kr(dur:dur, doneAction:2);
+	input = In.ar(in, 1);
+	freq = In.kr(freqBus, 1);
+	sig = LPF.ar(input, freq);
+	Out.ar(out, sig);
+}).add;
+
+SynthDef(\bandPassFilter, {
+	arg dur = 1, in = 0, freqBus = 0, rqBus = 0, out = 0;
+	var input, sig, freq, rq;
+	Line.kr(dur:dur, doneAction:2);
+	input = In.ar(in, 1);
+	freq = In.kr(freqBus, 1);
+	rq = In.kr(rqBus, 1);
+	sig = BPF.ar(input, freq, rq);
+	Out.ar(out, sig);
+}).add;
+
 SynthDef(\ringModulate, {
 	arg dur = 1, carrierBus = 0, modulatorFreqBus = 0, out = 0;
 	var carrier, modulatorFreq, sig;
@@ -288,21 +316,23 @@ SynthDef(\pan, {arg dur = 1, panBus = 0, in = 0, out = 0;
 }).add;
 
 SynthDef(\monoDelay, {
-	arg dur = 1, in = 0, out = 0, delaytime = 0.2, decaytime = 1;
-	var input, delaySig;
+	arg dur = 1, in = 0, out = 0, delaytime = 0.2, decaytime = 1, ampBus = 0;
+	var input, delaySig, amp;
 	Line.kr(dur:dur, doneAction:2);
+	amp = In.kr(ampBus, 1);
 	input = In.ar(in, 1);
-	delaySig = CombL.ar(input, delaytime, delaytime, decaytime);
+	delaySig = CombL.ar(input, delaytime, delaytime, decaytime, mul:amp);
 
 	Out.ar(out, delaySig + input);
 }).add;
 
 SynthDef(\stereoDelay, {
-	arg dur = 1, in = 0, out = 0, delaytime = 0.2, decaytime = 1;
-	var input, delaySig;
+	arg dur = 1, in = 0, out = 0, delaytime = 0.2, decaytime = 1, ampBus = 0;
+	var input, delaySig, amp;
 	Line.kr(dur:dur, doneAction:2);
+	amp = In.kr(ampBus, 1);
 	input = In.ar(in, 2);
-	delaySig = CombL.ar(input, delaytime, delaytime, decaytime);
+	delaySig = CombL.ar(input, delaytime, delaytime, decaytime, mul:amp);
 
 	Out.ar(out, delaySig + input);
 }).add;
@@ -494,4 +524,6 @@ s.reboot;
 s.prepareForRecord();
 s.record;
 s.stopRecording;
+
+
 
