@@ -38,11 +38,11 @@ object Instruments {
   def panning(inBus: AudioInstrument, panBus: ControlInstrument): Panning =
     new Panning().pan(inBus, panBus)
 
-  def monoDelay(inBus: AudioInstrument, delayTime: Float, decayTime: Float): MonoDelay =
-    new MonoDelay().delay(inBus, delayTime, decayTime)
+  def monoDelay(inBus: AudioInstrument, ampBus: ControlInstrument, delayTime: Float, decayTime: Float): MonoDelay =
+    new MonoDelay().delay(inBus, ampBus, delayTime, decayTime)
 
-  def stereoDelay(inBus: AudioInstrument, delayTime: Float, decayTime: Float): StereoDelay =
-    new StereoDelay().delay(inBus, delayTime, decayTime)
+  def stereoDelay(inBus: AudioInstrument, ampBus: ControlInstrument, delayTime: Float, decayTime: Float): StereoDelay =
+    new StereoDelay().delay(inBus, ampBus, delayTime, decayTime)
 
   def reverb(inBus: AudioInstrument, preDelay: Float, wet: Float, combDelay: Float, combDecay: Float, allpassDelay: Float, allpassDecay: Float): Reverb =
     new Reverb().reverb(inBus, preDelay, wet, combDelay, combDecay, allpassDelay, allpassDecay)
@@ -76,6 +76,15 @@ object Instruments {
 
   def resonantFilter(inBus: AudioInstrument, freqBus: ControlInstrument, decayBus: ControlInstrument): ResonantFilter =
     new ResonantFilter().filter(inBus, freqBus, decayBus)
+
+  def lowPassFilter(inBus: AudioInstrument, freqBus: ControlInstrument): LowPassFilter =
+    new LowPassFilter().filter(inBus, freqBus)
+
+  def highPassFilter(inBus: AudioInstrument, freqBus: ControlInstrument): HighPassFilter =
+    new HighPassFilter().filter(inBus, freqBus)
+
+  def bandPassFilter(inBus: AudioInstrument, freqBus: ControlInstrument, rqBus: ControlInstrument): BandPassFilter =
+    new BandPassFilter().filter(inBus, freqBus, rqBus)
 
   def ringModulate(carrierBus: AudioInstrument, modulatorFreqBus: ControlInstrument): RingModulate =
     new RingModulate().modulate(carrierBus, modulatorFreqBus)
@@ -365,17 +374,19 @@ object Instruments {
     var inBus: AudioInstrument = _
     var delaytime: jl.Float = _
     var decaytime: jl.Float = _
-    val nrOfChannels: Int
+    //val nrOfChannels: Int
+    var ampBus: ControlInstrument = _
 
-    def delay(inBus: AudioInstrument, delayTime: Float, decayTime: Float): SelfType = {
+    def delay(inBus: AudioInstrument, ampBus: ControlInstrument, delayTime: Float, decayTime: Float): SelfType = {
       this.inBus = inBus
+      this.ampBus = ampBus
       this.delaytime = buildFloat(delayTime)
       this.decaytime = buildFloat(decayTime)
       self()
     }
 
     override def graph(parent: Seq[ModularInstrument]): Seq[ModularInstrument] =
-      appendToGraph(inBus.graph(parent))
+      appendToGraph(ampBus.graph(inBus.graph(parent)))
 
     def getInputBus(startTime: Float, durationFallback: Float): Int =
       this.inBus.getOutputBus.dynamicBus(startTime,
@@ -386,9 +397,11 @@ object Instruments {
       val durationFallback: jl.Float = buildFloat(duration)
 
       Seq("in", buildInteger(
-          getInputBus(startTime, durationFallback)),
-        "delaytime", delaytime,
-        "decaytime", decaytime)
+            getInputBus(startTime, durationFallback)),
+          "ampBus", ampBus.getOutputBus.dynamicBus(startTime,
+            startTime + ampBus.optionalDur.getOrElse(duration)),
+          "delaytime", delaytime,
+          "decaytime", decaytime)
     }
   }
 
@@ -399,7 +412,7 @@ object Instruments {
 
     override val instrumentName: String = "monoDelay"
 
-    override val nrOfChannels = 1
+    //override val nrOfChannels = 1
   }
 
   class StereoDelay extends Delay {
@@ -409,7 +422,7 @@ object Instruments {
 
     override val instrumentName: String = "stereoDelay"
 
-    override val nrOfChannels = 2
+    //override val nrOfChannels = 2
   }
 
   class Reverb extends AudioInstrument {
@@ -758,6 +771,107 @@ object Instruments {
         "decayBus", buildInteger(
           decayBus.getOutputBus.dynamicBus(startTime,
             startTime + decayBus.optionalDur.getOrElse(duration))))
+    }
+  }
+
+  class HighPassFilter extends AudioInstrument {
+    type SelfType = HighPassFilter
+
+    def self(): SelfType = this
+
+    val instrumentName: String = "highPassFilter"
+
+    var inBus: AudioInstrument = _
+    var freqBus: ControlInstrument = _
+
+    def filter(inBus: AudioInstrument, freqBus: ControlInstrument): SelfType = {
+      this.inBus = inBus
+      this.freqBus = freqBus
+      self()
+    }
+
+    override def graph(parent: Seq[ModularInstrument]): Seq[ModularInstrument] =
+      appendToGraph(inBus.graph(freqBus.graph(parent)))
+
+    override def internalBuild(startTime: Float, duration: Float): Seq[Object] = {
+      val durationFallback: jl.Float = buildFloat(duration)
+
+      Seq(
+        "in", buildInteger(
+          inBus.getOutputBus.dynamicBus(startTime,
+            startTime + inBus.optionalDur.getOrElse(duration))),
+        "freqBus", buildInteger(
+          freqBus.getOutputBus.dynamicBus(startTime,
+            startTime + freqBus.optionalDur.getOrElse(duration))))
+    }
+  }
+
+  class LowPassFilter extends AudioInstrument {
+    type SelfType = LowPassFilter
+
+    def self(): SelfType = this
+
+    val instrumentName: String = "lowPassFilter"
+
+    var inBus: AudioInstrument = _
+    var freqBus: ControlInstrument = _
+
+    def filter(inBus: AudioInstrument, freqBus: ControlInstrument): SelfType = {
+      this.inBus = inBus
+      this.freqBus = freqBus
+      self()
+    }
+
+    override def graph(parent: Seq[ModularInstrument]): Seq[ModularInstrument] =
+      appendToGraph(inBus.graph(freqBus.graph(parent)))
+
+    override def internalBuild(startTime: Float, duration: Float): Seq[Object] = {
+      val durationFallback: jl.Float = buildFloat(duration)
+
+      Seq(
+        "in", buildInteger(
+          inBus.getOutputBus.dynamicBus(startTime,
+            startTime + inBus.optionalDur.getOrElse(duration))),
+        "freqBus", buildInteger(
+          freqBus.getOutputBus.dynamicBus(startTime,
+            startTime + freqBus.optionalDur.getOrElse(duration))))
+    }
+  }
+
+  class BandPassFilter extends AudioInstrument {
+    type SelfType = BandPassFilter
+
+    def self(): SelfType = this
+
+    val instrumentName: String = "bandPassFilter"
+
+    var inBus: AudioInstrument = _
+    var freqBus: ControlInstrument = _
+    var rqBus: ControlInstrument = _
+
+    def filter(inBus: AudioInstrument, freqBus: ControlInstrument, rqBus: ControlInstrument): SelfType = {
+      this.inBus = inBus
+      this.freqBus = freqBus
+      this.rqBus = rqBus
+      self()
+    }
+
+    override def graph(parent: Seq[ModularInstrument]): Seq[ModularInstrument] =
+      appendToGraph(inBus.graph(freqBus.graph(rqBus.graph(parent))))
+
+    override def internalBuild(startTime: Float, duration: Float): Seq[Object] = {
+      val durationFallback: jl.Float = buildFloat(duration)
+
+      Seq(
+        "in", buildInteger(
+          inBus.getOutputBus.dynamicBus(startTime,
+            startTime + inBus.optionalDur.getOrElse(duration))),
+        "freqBus", buildInteger(
+          freqBus.getOutputBus.dynamicBus(startTime,
+            startTime + freqBus.optionalDur.getOrElse(duration))),
+        "rqBus", buildInteger(
+          rqBus.getOutputBus.dynamicBus(startTime,
+            startTime + rqBus.optionalDur.getOrElse(duration))))
     }
   }
 

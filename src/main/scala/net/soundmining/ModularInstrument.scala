@@ -88,6 +88,13 @@ object ModularInstrument {
       self()
     }
 
+    var nrOfChannels: Int = 1
+
+    def withNrOfChannels(value: Int): SelfType = {
+      nrOfChannels = value
+      self()
+    }
+
     /**
       * return this instruments output bus
       */
@@ -142,7 +149,7 @@ object ModularInstrument {
         val graph = Seq(
           instrumentName,
           Integer.valueOf(-1), addAction.action, nodeId.nodeId,
-          "out", buildInteger(getOutputBus.dynamicBus(startTime, startTime + finalDuration)),
+          "out", buildInteger(getOutputBus.dynamicBus(startTime, startTime + finalDuration, nrOfChannels)),
           "dur", finalDuration
         ) ++ internalBuild(startTime, duration)
         instrumentIsBuilt = true
