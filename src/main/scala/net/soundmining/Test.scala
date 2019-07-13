@@ -9,14 +9,10 @@ import net.soundmining.Utils.absoluteTimeToMillis
 import Melody._
 import scala.io.StdIn
 import scala.util.Random
+import Modular3.Note
 
+object Test {
 /*
-Maybe some kind of dialogue. Question, response. And some background that is not moving.
-Theme and dialouge over an ambient background. Lou Reed, "me, I just don't care at all".
-*/
-object Arpeggio1 {
-
-  /*
   Play with attackTime/duration
   0.05 / 0.1
   0.05 / 0.9
@@ -270,15 +266,6 @@ object Arpeggio1 {
     }
   }
 
-  def threeBlock(lengths: (Float, Float, Float), vals: (Float, Float, Float, Float)): ThreeBlockControl = {
-    threeBlockcontrol(
-      startValue1 =  vals._1, len1 = lengths._1, 
-      startValue2 = vals._2, len2 = lengths._2, 
-      startValue3 = vals._3, len3 = lengths._3, 
-      endValue3 = vals._4, 
-      Right(Instrument.LINEAR))
-
-  }
 
   /**
    * Explore low tones
@@ -353,138 +340,6 @@ object Arpeggio1 {
     }
   }
 
-  case class Note(startTime: Float, duration: Float, lengths: (Float, Float, Float)) {
-    var audio: Option[AudioInstrument] = None
-    var pan: Option[Panning] = None
-    var output: Option[StaticAudioBusInstrument] = None
-
-    def fm(ampValue: (Float, Float), modFreq: (Float, Float, Float, Float), carrierFreq: (Float, Float, Float, Float), modAmount: (Float, Float, Float, Float)): Note = {
-      val amp = threeBlock(lengths = lengths, vals = (0.001f, ampValue._1, ampValue._2, 0.001f))
-      val modAmountControl = threeBlock(lengths = lengths, vals = modAmount)
-      
-      val modFreqControl = threeBlock(lengths = lengths, vals = modFreq)
-      val modulator = sineOsc(modAmountControl, modFreqControl)
-      val carrierFreqControl = threeBlock(lengths = lengths, vals = carrierFreq)
-      val fm = fmSineModulate(carrierFreqControl, modulator, amp)
-        .addAction(TAIL_ACTION)
-
-      audio = Some(fm)  
-      this
-    }
-
-    def fmPulse(ampValue: (Float, Float), modFreq: (Float, Float, Float, Float), carrierFreq: (Float, Float, Float, Float), modAmount: (Float, Float, Float, Float)): Note = {
-      val amp = threeBlock(lengths = lengths, vals = (0.001f, ampValue._1, ampValue._2, 0.001f))
-      val modAmountControl = threeBlock(lengths = lengths, vals = modAmount)
-      
-      val modFreqControl = threeBlock(lengths = lengths, vals = modFreq)
-      val modulator = pulseOsc(modAmountControl, modFreqControl)
-      val carrierFreqControl = threeBlock(lengths = lengths, vals = carrierFreq)
-      val fm = fmPulseModulate(carrierFreqControl, modulator, amp)
-        .addAction(TAIL_ACTION)
-
-      audio = Some(fm)  
-      this
-    }
-
-    def pulse(ampValue: (Float, Float), freq: (Float, Float, Float, Float)): Note = {
-      val amp = threeBlock(lengths = lengths, vals = (0.001f, ampValue._1, ampValue._2, 0.001f))
-      val freqControl = threeBlock(lengths = lengths, vals = freq)
-      val pulse = pulseOsc(ampBus = amp, freqBus = freqControl)
-        .addAction(TAIL_ACTION)
-
-      audio = Some(pulse)
-      this  
-    }
-
-    def ring(ringModFreq: (Float, Float, Float, Float)): Note = {
-      audio.foreach(a => {
-        val ringModFreqControl = threeBlock(lengths = lengths, vals = ringModFreq)
-        val ringMod = ringModulate(a, ringModFreqControl)
-          .addAction(TAIL_ACTION)
-        audio = Some(ringMod)  
-      })
-      this
-    }
-
-    def highPass(filterFreq: (Float, Float, Float, Float)): Note = {
-      audio.foreach(a => {
-        val filterFreqControl = threeBlock(lengths = lengths, vals = filterFreq)
-        val filter = highPassFilter(a, freqBus = filterFreqControl)
-          .addAction(TAIL_ACTION)
-        audio = Some(filter)  
-      })
-      this
-    }
-
-    def lowPass(filterFreq: (Float, Float, Float, Float)): Note = {
-      audio.foreach(a => {
-        val filterFreqControl = threeBlock(lengths = lengths, vals = filterFreq)
-        val filter = lowPassFilter(a, freqBus = filterFreqControl)
-          .addAction(TAIL_ACTION)
-        audio = Some(filter)  
-      })
-      this
-    }
-
-    def bandPass(lowerFreq: (Float, Float, Float, Float), higherFreq: (Float, Float, Float, Float)): Note = {
-      // http://www.sengpielaudio.com/calculator-bandwidth.htm
-      // http://www.sengpielaudio.com/calculator-geommean.htm
-      // From the SuperCollider documentation  
-      // The reciprocal of Q. Q is conventionally defined as cutoffFreq / bandwidth, meaning rq = (bandwidth / cutoffFreq).  
-
-      def geometricMean(lower: Float, higher: Float): Float = math.sqrt(lower * higher).toFloat
-
-      def center(lower: Float, higher: Float): Float = geometricMean(lower, higher)
-
-      def rq(lower: Float, higher: Float): Float =
-        (higher - lower) / lower
-
-      val centerFreq = (
-        center(lowerFreq._1, higherFreq._1), 
-        center(lowerFreq._2, higherFreq._2), 
-        center(lowerFreq._3, higherFreq._3), 
-        center(lowerFreq._4, higherFreq._4))
-
-      val rqs = (
-        rq(lowerFreq._1, higherFreq._1), 
-        rq(lowerFreq._2, higherFreq._2), 
-        rq(lowerFreq._3, higherFreq._3), 
-        rq(lowerFreq._4, higherFreq._4))  
-      
-        audio.foreach(a => {
-          val freqControl = threeBlock(lengths = lengths, vals = centerFreq)
-          val rqControl = threeBlock(lengths = lengths, vals = rqs)
-          val filter = bandPassFilter(a, freqBus = freqControl, rqBus = rqControl)
-            .addAction(TAIL_ACTION)
-          audio = Some(filter)  
-        })
-        this
-    }
-
-    def pan(panValue: (Float, Float, Float, Float), output: Option[StaticAudioBusInstrument] = None): Note = {
-      audio.map(a => {
-        val panControl = threeBlock(lengths = lengths, vals = panValue)  
-        val pan = panning(a, panControl)
-          .addAction(TAIL_ACTION)
-        if(output.isDefined) {
-          pan.withOutput(output.get)
-        } else {
-          pan.getOutputBus.staticBus(0)    
-        } 
-        
-        this.pan = Some(pan)
-      })
-      this
-    }
-
-    def play(implicit player: MusicPlayer): Unit = {
-      pan.map(p => {
-        val graph = p.buildGraph(startTime, duration, p.graph(Seq()))
-        player.sendNew(absoluteTimeToMillis(startTime), graph)  
-      })
-    }
-  }
-
 
   /*
   Test fm with threeblock controls. Middle theme.
@@ -502,7 +357,7 @@ object Arpeggio1 {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -510,7 +365,7 @@ object Arpeggio1 {
        .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
        .play
 
-    Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
@@ -518,7 +373,7 @@ object Arpeggio1 {
        .pan(panValue = (-0.8f, 0, 0, 0.8f))
        .play  
        
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
@@ -543,7 +398,7 @@ object Arpeggio1 {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
@@ -551,7 +406,7 @@ object Arpeggio1 {
       .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
       .play    
 
-    Note(startTime = startTime, duration = 8, lengths = (3, 4, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (3, 4, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
@@ -576,7 +431,7 @@ object Arpeggio1 {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
@@ -585,7 +440,7 @@ object Arpeggio1 {
       .play    
 
 
-    Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),  
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
@@ -593,7 +448,7 @@ object Arpeggio1 {
       .pan(panValue = (-0.8f, 0, 0, 0.8f))
       .play
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
@@ -601,7 +456,7 @@ object Arpeggio1 {
       .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
       .play  
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
@@ -622,7 +477,7 @@ object Arpeggio1 {
     val fact3 = spectrum(2) / spectrum.head
     val spectrum2 = makeSpectrum2(fact2, fact, 50)
 
-    Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum2(3) * fact, spectrum2(3) * fact, spectrum2(3) * fact, spectrum2(3) * fact),
           carrierFreq = (spectrum2(3), spectrum2(3), spectrum2(3), spectrum2(3)),
@@ -630,7 +485,7 @@ object Arpeggio1 {
       .pan(panValue = (-0.8f, 0, 0, 0.8f))
       .play 
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum2(5) * fact, spectrum2(5) * fact, spectrum2(5) * fact, spectrum2(5) * fact),
           carrierFreq = (spectrum2(5), spectrum2(5), spectrum2(5), spectrum2(5)),
@@ -638,7 +493,7 @@ object Arpeggio1 {
       .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
       .play   
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum2(7) * fact, spectrum2(7) * fact, spectrum2(7) * fact, spectrum2(7) * fact),
           carrierFreq = (spectrum2(7), spectrum2(7), spectrum2(7), spectrum2(7)),
@@ -663,7 +518,7 @@ object Arpeggio1 {
     simpleFm(0, 20f, 0.5f, 10f, fact3, spectrum2(7), (spectrum(26), spectrum(46)), 10f, 0.5f)
     */
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -671,7 +526,7 @@ object Arpeggio1 {
       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
       .play    
 
-    Note(startTime = startTime + 10, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime + 10, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
         modFreq = (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
         carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -697,7 +552,7 @@ object Arpeggio1 {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -706,7 +561,7 @@ object Arpeggio1 {
        .pan(panValue = (0f, 0f, 0f, 0f))
        .play
 
-    Note(startTime = startTime + 10, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime + 10, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.9f, 0.9f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -736,13 +591,13 @@ object Arpeggio1 {
     println(s"fact $fact fact2 $fact2 fact3 $fact3")
     println(s"spectrum2 $spectrum2")
 
-    Note(startTime = startTime, duration = 13, lengths = (2, 8, 3))
+    Modular3.Note(startTime = startTime, duration = 13, lengths = (2, 8, 3))
       .pulse(ampValue = (0.5f, 0.5f), freq = (spectrum2(0), spectrum2(1), spectrum2(1), spectrum2(2)))
       .bandPass(lowerFreq = (1000, 1000, 4000, 4000), higherFreq = (1200, 1200, 6000, 6000))   
       .pan(panValue = (-0.8f, 0, 0, 0.8f))
       .play 
 
-    Note(startTime = startTime, duration = 13, lengths = (3, 8, 2))
+    Modular3.Note(startTime = startTime, duration = 13, lengths = (3, 8, 2))
       .pulse(ampValue = (0.5f, 0.5f), freq = (spectrum2(3), spectrum2(2), spectrum2(2), spectrum2(1)))
       .bandPass(lowerFreq = (800, 800, 300, 300), higherFreq = (1000, 1000, 500, 500))   
       .pan(panValue = (0f, 0.5f, -0.5f, 0f))
@@ -763,7 +618,7 @@ object Arpeggio1 {
     val spectrum2 = makeSpectrum2(fact3, fact, 50)
     println(spectrum2.zipWithIndex)
 
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -775,7 +630,7 @@ object Arpeggio1 {
        This doesn't really work. Maybe it should work better as a call and response?
        E.g you response to the main theme with this
        */
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .pulse(ampValue = (0.5f, 0.4f), freq = (spectrum2(3), spectrum2(7), spectrum2(5), spectrum2(2)))
       .bandPass(
         lowerFreq = (spectrum(15), spectrum(25), spectrum(21), spectrum(29)), 
@@ -783,7 +638,7 @@ object Arpeggio1 {
       .pan(panValue = (-0.8f, 0, 0, 0.8f))
       .play 
 
-    Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
@@ -791,7 +646,7 @@ object Arpeggio1 {
        .pan(panValue = (-0.8f, 0, 0, 0.8f))
        .play  
        
-    Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
@@ -820,7 +675,7 @@ object Arpeggio1 {
     println(s"spectrum2 ${spectrum2.zipWithIndex}")
 
     val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = (10, 40, 10), vals = (0.001f, 0.05f, 0.03f, 0.001f))
+    val delayAmp = Modular3.threeBlock(lengths = (10, 40, 10), vals = (0.001f, 0.05f, 0.03f, 0.001f))
     val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum2(4), decayTime = spectrum2(9))
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
@@ -829,7 +684,7 @@ object Arpeggio1 {
     val graph = delay.buildGraph(startTime, 60, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
      
-    Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
+    Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.2f, 0.3f), freq = (spectrum2(0) / 7, spectrum2(1) / 7, spectrum2(1) / 7, spectrum2(2) / 7))
       .bandPass(
         lowerFreq = (50, 80, 70, 90), 
@@ -838,7 +693,7 @@ object Arpeggio1 {
       .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
       .play 
 
-    Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
+    Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.6f, 0.5f), freq = (spectrum2(0) / 7.02f, spectrum2(1) / 7.01f, spectrum2(1) / 7.02f, spectrum2(2) / 7.01f))
       .bandPass(
         lowerFreq = (1000, 1500, 1200, 1600), 
@@ -846,7 +701,7 @@ object Arpeggio1 {
       .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
       .play       
 
-    Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
+    Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.5f, 0.6f), freq = (spectrum2(0) / 6.98f, spectrum2(1) / 6.99f, spectrum2(1) / 6.98f, spectrum2(2) / 6.99f))
       .bandPass(
         lowerFreq = (6000, 6500, 6400, 6700), 
@@ -854,7 +709,6 @@ object Arpeggio1 {
       .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
       .play            
   }
-
 
   def main(args: Array[String]): Unit = {
     implicit val player: MusicPlayer = MusicPlayer()
@@ -878,4 +732,5 @@ object Arpeggio1 {
     player.stopPlay()
     
   }
+
 }
