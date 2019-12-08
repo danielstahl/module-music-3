@@ -90,6 +90,7 @@ object Modular3 {
     }
 
     def lowPass(filterFreq: (Float, Float, Float, Float)): Note = {
+
       audio.foreach(a => {
         val filterFreqControl = threeBlock(lengths = lengths, vals = filterFreq)
         val filter = lowPassFilter(a, freqBus = filterFreqControl)
@@ -160,7 +161,7 @@ object Modular3 {
 
   val baseNotes = Seq(
       (noteToHertz('c2), noteToHertz('fiss3)),
-      (noteToHertz('diss2), noteToHertz('d3)), ///
+      (noteToHertz('diss2), noteToHertz('d3)), 
       (noteToHertz('hess2), noteToHertz('g3)),
       (noteToHertz('ciss2), noteToHertz('diss3)),
       (noteToHertz('h1), noteToHertz('giss3)),
@@ -235,7 +236,6 @@ object Modular3 {
       .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
       .play 
 
-      
     // Middle theme
     val longDurationDivision = duration / 4
     val longStartTimes = absolute(startTime + longDurationDivision, Seq(longDurationDivision, longDurationDivision, longDurationDivision))
@@ -885,7 +885,6 @@ object Modular3 {
       .play 
   }
 
-
   def exposition6(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
     println(s"Exposition6 at startTime $startTime ")
     val spectrum = spectrums(5)
@@ -1166,6 +1165,1352 @@ object Modular3 {
       .play 
   }
 
+  def development11(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development11 at startTime $startTime ")
+    val spectrum = spectrums.head
+    val fact = facts.head
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    val filterFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15))
+    println(s"FilterFreq $filterFreq")
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .lowPass(filterFreq = filterFreq)    
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (300, 3000, 300, 100))
+    .lowPass(filterFreq = filterFreq)    
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .lowPass(filterFreq = filterFreq)    
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (300, 3000, 300, 100))
+    .lowPass(filterFreq = filterFreq)    
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .lowPass(filterFreq = filterFreq)    
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 500, 2000, 100))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .lowPass(filterFreq = filterFreq)          
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .lowPass(filterFreq = filterFreq)   
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 500, 2000, 100))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .lowPass(filterFreq = filterFreq)          
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play   
+  
+    val startTimes3 = absolute(startTime + (gridTime * 8 * 2), durations)    
+    
+    Note(startTime = startTimes3.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play
+
+    Note(startTime = startTimes3(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (300, 3000, 500, 100))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play  
+    
+    Note(startTime = startTimes3(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play
+
+    Note(startTime = startTimes3(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play
+    
+    Note(startTime = startTimes3(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (300, 3000, 500, 100))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play  
+      
+    Note(startTime = startTimes3(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play  
+    
+    val startTimes4 = absolute(startTime + (gridTime * 8 * 3), durations)
+
+    Note(startTime = startTimes4.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+
+    Note(startTime = startTimes4(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (300, 3000, 500, 100))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play  
+
+    Note(startTime = startTimes4(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+      
+    Note(startTime = startTimes4(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play  
+
+    Note(startTime = startTimes4(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (300, 3000, 500, 100))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+      
+    Note(startTime = startTimes4(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play   
+
+    val development12startTime = startTime + (gridTime * 8 * 8)  
+    development12(development12startTime)
+    
+  }
+
+  def development12(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development12 at startTime $startTime ")
+    val spectrum = spectrums(4)
+    val fact = facts(4)
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    val filterFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6))
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .highPass(filterFreq = filterFreq)    
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (300, 3000, 300, 100))
+    .highPass(filterFreq = filterFreq)    
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .highPass(filterFreq = filterFreq)    
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .highPass(filterFreq = filterFreq)    
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (300, 3000, 300, 100))
+    .highPass(filterFreq = filterFreq)    
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .highPass(filterFreq = filterFreq)    
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 500, 2000, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 500, 2000, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play   
+  
+    val startTimes3 = absolute(startTime + (gridTime * 8 * 2), durations)    
+    
+    Note(startTime = startTimes3.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play
+
+    Note(startTime = startTimes3(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (300, 3000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play  
+    
+    Note(startTime = startTimes3(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play
+
+    Note(startTime = startTimes3(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play
+    
+    Note(startTime = startTimes3(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (300, 3000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play  
+      
+    Note(startTime = startTimes3(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play  
+    
+    val startTimes4 = absolute(startTime + (gridTime * 8 * 3), durations)
+
+    Note(startTime = startTimes4.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+
+    Note(startTime = startTimes4(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (300, 3000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play  
+
+    Note(startTime = startTimes4(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+      
+    Note(startTime = startTimes4(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play  
+
+    Note(startTime = startTimes4(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (300, 3000, 500, 100))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+      
+    Note(startTime = startTimes4(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .highPass(filterFreq = filterFreq)    
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play
+
+    val development13startTime = startTime + (gridTime * 8 * 8)  
+    development13(development13startTime)  
+  }
+
+  def development13(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development13 at startTime $startTime ")
+    val spectrum = spectrums(5)
+    val fact = facts(5)
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (300, 3000, 300, 100))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (300, 3000, 300, 100))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+        modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
+        carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
+        modAmount = (100, 300, 3000, 300))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 500, 2000, 100))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 500, 2000, 100))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+          modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
+          carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
+          modAmount = (100, 2000, 500, 100))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play   
+  
+    val startTimes3 = absolute(startTime + (gridTime * 8 * 2), durations)    
+    
+    Note(startTime = startTimes3.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play
+
+    Note(startTime = startTimes3(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (300, 3000, 500, 100))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play  
+    
+    Note(startTime = startTimes3(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play
+
+    Note(startTime = startTimes3(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play
+    
+    Note(startTime = startTimes3(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (300, 3000, 500, 100))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .play  
+      
+    Note(startTime = startTimes3(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
+          carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .play  
+    
+    val startTimes4 = absolute(startTime + (gridTime * 8 * 3), durations)
+
+    Note(startTime = startTimes4.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+
+    Note(startTime = startTimes4(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (300, 3000, 500, 100))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play  
+
+    Note(startTime = startTimes4(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+      
+    Note(startTime = startTimes4(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play  
+
+    Note(startTime = startTimes4(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (300, 3000, 500, 100))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .play
+      
+    Note(startTime = startTimes4(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f), 
+          modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
+          carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
+          modAmount = (100, 500, 3000, 300))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .play
+
+    val development14startTime = startTime + (gridTime * 8 * 8)  
+    development14(development14startTime)    
+  }
+
+  def development14(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development14 at startTime $startTime ")
+    val spectrum = spectrums(1)
+    val fact = facts(1)
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    val filterFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1))
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)    
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .lowPass(filterFreq = filterFreq)  
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)  
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)  
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .lowPass(filterFreq = filterFreq)  
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .lowPass(filterFreq = filterFreq)  
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play 
+      
+    val development15startTime = startTime + (gridTime * 8 * 6)  
+    development15(development15startTime) 
+  }
+
+
+  def development15(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development15 at startTime $startTime ")
+    val spectrum = spectrums(2)
+    val fact = facts(2)
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    val filterFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0))
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .highPass(filterFreq = filterFreq)  
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)  
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)  
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)  
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .highPass(filterFreq = filterFreq)  
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)        
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play   
+
+    val development16startTime = startTime + (gridTime * 8 * 6)  
+    development16(development16startTime)    
+  }
+
+  def development16(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development16 at startTime $startTime ")
+    val spectrum = spectrums(3)
+    val fact = facts(3)
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    val filterFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1))
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .lowPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .lowPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+      
+    val development17startTime = startTime + (gridTime * 8 * 6)  
+    development17(development17startTime)      
+  }
+
+  def development17(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Development17 at startTime $startTime")
+    val spectrum = spectrums(6)
+    val fact = facts(6)
+    val fact2 = spectrum.head / spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val gridTime = spectrum3(2)
+
+    val times = Seq(
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2),
+
+      Seq(3, 8, 2),
+      Seq(5, 13, 3),
+      Seq(1, 5, 2)
+      )
+
+    val durations = times.map(noteLengths => noteLengths.sum * gridTime)  
+    
+    val lengths = times.map(l => (l.head * gridTime, l(1) * gridTime, l(2) * gridTime))
+
+    val startTimes1 = absolute(startTime, durations)
+
+    val filterFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0))
+
+    Note(startTime = startTimes1.head, duration = durations.head, lengths = lengths.head)
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+
+    Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+  
+    Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play  
+
+    Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
+    .fm(ampValue = (0.4f, 0.4f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play
+
+    Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
+    .fm(ampValue = (0.5f, 0.5f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (200, 2000, 300, 100))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .play
+  
+    Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
+    .fm(ampValue = (0.3f, 0.3f), 
+      modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
+      carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+      modAmount = (100, 300, 2000, 200))
+    .highPass(filterFreq = filterFreq)
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .play 
+    
+    val startTimes2 = absolute(startTime + (gridTime * 8), durations)
+    
+    Note(startTime = startTimes2.head, duration = durations.head, lengths = lengths.head)
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play
+    
+    Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play  
+
+    Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play 
+      
+    Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
+      .fm(ampValue = (0.4f, 0.4f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play
+    
+    Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
+      .fm(ampValue = (0.5f, 0.5f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (200, 500, 2000, 100))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .play  
+
+    Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
+      .fm(ampValue = (0.3f, 0.3f),  
+        modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
+        carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
+        modAmount = (100, 2000, 500, 200))
+      .highPass(filterFreq = filterFreq)
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .play   
+  }
+
   def main(args: Array[String]): Unit = {
     implicit val player: MusicPlayer = MusicPlayer()
     player.startPlay()
@@ -1182,7 +2527,7 @@ object Modular3 {
 
     println(s"Start times $startTimes")
   
-
+    /*
     exposition1(startTimes.head)
     exposition2(startTimes(1))
     exposition3(startTimes(2))
@@ -1190,7 +2535,31 @@ object Modular3 {
     exposition5(startTimes(4)) 
     exposition6(startTimes(5))
     exposition7(startTimes(6))
-    
+    */
+    development11()
+
+    // 6, 9 12, 15
+
+    /*
+    0 (65.4064,184.99724) High: 782.9514 1141.7239 1500.4963 1859.269
+    1 (77.78175,146.83243) High: 492.0858 699.2378 906.3898 1113.5419
+    2 (116.540955,195.99774) High: 593.28174 831.65204 1070.0225 1308.3928
+    3 (69.29566,155.5635) High: 586.9027 845.70624 1104.5098 1363.3132
+    4 (61.735424,207.6524) High: 937.2373 1374.9883 1812.7391 2250.49
+    5 (77.78175,220.00005) High: 931.0916 1357.7465 1784.4015 2211.0562
+    6 (73.416214,174.61415) High: 680.60376 984.19763 1287.7913 1591.3851
+
+    High: 0, 4, 5
+    Low 1, 2, 3, 6
+    */
+    spectrums
+      .zipWithIndex
+      .foreach { 
+        case (spectrum, i) => 
+          println(s"$i ${baseNotes(i)} High: ${spectrum(6)} ${spectrum(9)} ${spectrum(12)} ${spectrum(15)}")
+      }
+
+    //development11(0f)
     Console.println("Print q to quit")
     
     val cmd = StdIn.readLine()
