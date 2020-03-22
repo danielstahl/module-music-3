@@ -2,7 +2,7 @@ name := "arpeggio-i"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 
 libraryDependencies += "com.illposed.osc" % "javaosc-core" % "0.2"
 

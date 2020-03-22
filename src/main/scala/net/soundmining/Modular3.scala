@@ -16,6 +16,15 @@ Theme and dialouge over an ambient background. Lou Reed, "me, I just don't care 
 */
 object Modular3 {
 
+  val NUM_OUTPUT_BUSES: Int = 66
+  //val NUM_OUTPUT_BUSES: Int = 2
+
+  val STATIC_FM_AMP = 15.0f
+  val STATIC_PULSE_AMP = 1.0f
+
+  def getRealOutputBus(outputBus: Int): Int =
+    (outputBus % NUM_OUTPUT_BUSES) + 2
+
   def threeBlock(lengths: (Float, Float, Float), vals: (Float, Float, Float, Float)): ThreeBlockControl = {
     threeBlockcontrol(
       startValue1 =  vals._1, len1 = lengths._1, 
@@ -32,7 +41,7 @@ object Modular3 {
     var output: Option[StaticAudioBusInstrument] = None
 
     def fm(ampValue: (Float, Float), modFreq: (Float, Float, Float, Float), carrierFreq: (Float, Float, Float, Float), modAmount: (Float, Float, Float, Float)): Note = {
-      val amp = threeBlock(lengths = lengths, vals = (0.001f, ampValue._1, ampValue._2, 0.001f))
+      val amp = threeBlock(lengths = lengths, vals = (0.001f, ampValue._1 * STATIC_FM_AMP, ampValue._2 * STATIC_FM_AMP, 0.001f))
       val modAmountControl = threeBlock(lengths = lengths, vals = modAmount)
       
       val modFreqControl = threeBlock(lengths = lengths, vals = modFreq)
@@ -60,7 +69,7 @@ object Modular3 {
     }
 
     def pulse(ampValue: (Float, Float), freq: (Float, Float, Float, Float), startValue: Float = 0.001f): Note = {
-      val amp = threeBlock(lengths = lengths, vals = (startValue, ampValue._1, ampValue._2, 0.001f))
+      val amp = threeBlock(lengths = lengths, vals = (startValue, ampValue._1 * STATIC_PULSE_AMP, ampValue._2 * STATIC_PULSE_AMP, 0.001f))
       val freqControl = threeBlock(lengths = lengths, vals = freq)
       val pulse = pulseOsc(ampBus = amp, freqBus = freqControl)
         .addAction(TAIL_ACTION)
@@ -135,17 +144,23 @@ object Modular3 {
         this
     }
 
-    def pan(panValue: (Float, Float, Float, Float), output: Option[StaticAudioBusInstrument] = None): Note = {
+    def pan(panValue: (Float, Float, Float, Float), output: StaticAudioBusInstrument): Note = {
       audio.map(a => {
         val panControl = threeBlock(lengths = lengths, vals = panValue)  
         val pan = panning(a, panControl)
           .addAction(TAIL_ACTION)
-        if(output.isDefined) {
-          pan.withOutput(output.get)
-        } else {
-          pan.getOutputBus.staticBus(0)    
-        } 
-        
+        pan.withOutput(output)
+        this.pan = Some(pan)
+      })
+      this
+    }
+
+    def pan(panValue: (Float, Float, Float, Float), staticOutputBus: Int): Note = {
+      audio.map(a => {
+        val panControl = threeBlock(lengths = lengths, vals = panValue)  
+        val pan = panning(a, panControl)
+          .addAction(TAIL_ACTION)
+        pan.getOutputBus.staticBus(getRealOutputBus(staticOutputBus))
         this.pan = Some(pan)
       })
       this
@@ -205,7 +220,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -215,7 +230,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))  
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -224,7 +239,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))  
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -233,7 +248,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -250,7 +265,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -258,7 +273,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -266,7 +281,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -276,7 +291,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -284,7 +299,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -292,7 +307,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -300,7 +315,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -309,7 +324,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -317,7 +332,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -345,7 +360,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -355,7 +370,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))    
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -364,7 +379,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17))) 
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))      
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -373,7 +388,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49))) 
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))      
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -390,7 +405,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -398,7 +413,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -406,7 +421,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -416,7 +431,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
 
@@ -425,7 +440,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -433,7 +448,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -441,7 +456,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -450,7 +465,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -458,7 +473,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -486,7 +501,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -496,7 +511,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -505,7 +520,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -514,7 +529,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -531,7 +546,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -539,7 +554,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -547,7 +562,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -557,7 +572,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
 
@@ -566,7 +581,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -574,7 +589,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -582,7 +597,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -591,7 +606,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -599,7 +614,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -628,7 +643,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -638,7 +653,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -647,7 +662,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -656,7 +671,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -672,7 +687,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -680,7 +695,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -688,7 +703,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -698,7 +713,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
 
@@ -707,7 +722,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -715,7 +730,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -723,7 +738,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -732,7 +747,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -740,7 +755,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -769,7 +784,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -779,7 +794,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -788,7 +803,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -797,7 +812,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -813,7 +828,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -821,7 +836,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -829,7 +844,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -839,7 +854,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
 
@@ -848,7 +863,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -856,7 +871,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -864,7 +879,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -873,7 +888,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -881,7 +896,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -909,7 +924,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -919,7 +934,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -928,7 +943,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -937,7 +952,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -953,7 +968,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -961,7 +976,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -969,7 +984,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -979,7 +994,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
 
@@ -988,7 +1003,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -996,7 +1011,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1004,7 +1019,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -1013,7 +1028,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -1021,7 +1036,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -1049,7 +1064,7 @@ object Modular3 {
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
       .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(0)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
     val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
     player.sendNew(absoluteTimeToMillis(startTime), graph)
 
@@ -1059,7 +1074,7 @@ object Modular3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -1068,7 +1083,7 @@ object Modular3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -1077,7 +1092,7 @@ object Modular3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play 
 
     // Middle theme
@@ -1093,7 +1108,7 @@ object Modular3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -1101,7 +1116,7 @@ object Modular3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1109,7 +1124,7 @@ object Modular3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
       .play  
       
   
@@ -1119,7 +1134,7 @@ object Modular3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
       .play    
 
 
@@ -1128,7 +1143,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1136,7 +1151,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1144,7 +1159,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 4)
       .play 
 
     // Lower theme
@@ -1153,7 +1168,7 @@ object Modular3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -1161,7 +1176,7 @@ object Modular3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
       .play 
   }
 
@@ -1206,7 +1221,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .lowPass(filterFreq = filterFreq)    
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -1215,7 +1230,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (300, 3000, 300, 100))
     .lowPass(filterFreq = filterFreq)    
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -1224,7 +1239,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -1233,7 +1248,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .lowPass(filterFreq = filterFreq)    
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -1242,7 +1257,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (300, 3000, 300, 100))
     .lowPass(filterFreq = filterFreq)    
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -1251,7 +1266,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .lowPass(filterFreq = filterFreq)    
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -1262,7 +1277,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -1271,7 +1286,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 500, 2000, 100))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -1280,7 +1295,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .lowPass(filterFreq = filterFreq)          
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -1289,7 +1304,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .lowPass(filterFreq = filterFreq)   
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -1298,7 +1313,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 500, 2000, 100))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -1307,7 +1322,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .lowPass(filterFreq = filterFreq)          
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play   
   
     val startTimes3 = absolute(startTime + (gridTime * 8 * 2), durations)    
@@ -1318,7 +1333,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play
 
     Note(startTime = startTimes3(1), duration = durations(1), lengths = lengths(1))
@@ -1327,7 +1342,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (300, 3000, 500, 100))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play  
     
     Note(startTime = startTimes3(2), duration = durations(2), lengths = lengths(2))
@@ -1336,7 +1351,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play
 
     Note(startTime = startTimes3(3), duration = durations(3), lengths = lengths(3))
@@ -1345,7 +1360,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play
     
     Note(startTime = startTimes3(4), duration = durations(4), lengths = lengths(4))
@@ -1354,7 +1369,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (300, 3000, 500, 100))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play  
       
     Note(startTime = startTimes3(5), duration = durations(5), lengths = lengths(5))
@@ -1363,7 +1378,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play  
     
     val startTimes4 = absolute(startTime + (gridTime * 8 * 3), durations)
@@ -1374,7 +1389,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
 
     Note(startTime = startTimes4(1), duration = durations(1), lengths = lengths(1))
@@ -1383,7 +1398,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (300, 3000, 500, 100))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play  
 
     Note(startTime = startTimes4(2), duration = durations(2), lengths = lengths(2))
@@ -1392,7 +1407,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
       
     Note(startTime = startTimes4(3), duration = durations(3), lengths = lengths(3))
@@ -1401,7 +1416,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play  
 
     Note(startTime = startTimes4(4), duration = durations(4), lengths = lengths(4))
@@ -1410,7 +1425,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (300, 3000, 500, 100))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
       
     Note(startTime = startTimes4(5), duration = durations(5), lengths = lengths(5))
@@ -1419,7 +1434,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play   
 
     val development12startTime = startTime + (gridTime * 8 * 8)  
@@ -1467,7 +1482,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .highPass(filterFreq = filterFreq)    
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -1476,7 +1491,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (300, 3000, 300, 100))
     .highPass(filterFreq = filterFreq)    
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -1485,7 +1500,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .highPass(filterFreq = filterFreq)    
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -1494,7 +1509,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .highPass(filterFreq = filterFreq)    
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -1503,7 +1518,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (300, 3000, 300, 100))
     .highPass(filterFreq = filterFreq)    
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -1512,7 +1527,7 @@ object Modular3 {
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
     .highPass(filterFreq = filterFreq)    
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -1523,7 +1538,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -1532,7 +1547,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 500, 2000, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -1541,7 +1556,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -1550,7 +1565,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -1559,7 +1574,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 500, 2000, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -1568,7 +1583,7 @@ object Modular3 {
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play   
   
     val startTimes3 = absolute(startTime + (gridTime * 8 * 2), durations)    
@@ -1579,7 +1594,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play
 
     Note(startTime = startTimes3(1), duration = durations(1), lengths = lengths(1))
@@ -1588,7 +1603,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (300, 3000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play  
     
     Note(startTime = startTimes3(2), duration = durations(2), lengths = lengths(2))
@@ -1597,7 +1612,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play
 
     Note(startTime = startTimes3(3), duration = durations(3), lengths = lengths(3))
@@ -1606,7 +1621,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play
     
     Note(startTime = startTimes3(4), duration = durations(4), lengths = lengths(4))
@@ -1615,7 +1630,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (300, 3000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play  
       
     Note(startTime = startTimes3(5), duration = durations(5), lengths = lengths(5))
@@ -1624,7 +1639,7 @@ object Modular3 {
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play  
     
     val startTimes4 = absolute(startTime + (gridTime * 8 * 3), durations)
@@ -1635,7 +1650,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
 
     Note(startTime = startTimes4(1), duration = durations(1), lengths = lengths(1))
@@ -1644,7 +1659,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (300, 3000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play  
 
     Note(startTime = startTimes4(2), duration = durations(2), lengths = lengths(2))
@@ -1653,7 +1668,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
       
     Note(startTime = startTimes4(3), duration = durations(3), lengths = lengths(3))
@@ -1662,7 +1677,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play  
 
     Note(startTime = startTimes4(4), duration = durations(4), lengths = lengths(4))
@@ -1671,7 +1686,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (300, 3000, 500, 100))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
       
     Note(startTime = startTimes4(5), duration = durations(5), lengths = lengths(5))
@@ -1680,7 +1695,7 @@ object Modular3 {
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
       .highPass(filterFreq = filterFreq)    
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play
 
     val development13startTime = startTime + (gridTime * 8 * 8)  
@@ -1724,7 +1739,7 @@ object Modular3 {
         modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -1732,7 +1747,7 @@ object Modular3 {
         modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (300, 3000, 300, 100))
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -1740,7 +1755,7 @@ object Modular3 {
         modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -1748,7 +1763,7 @@ object Modular3 {
         modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -1756,7 +1771,7 @@ object Modular3 {
         modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (300, 3000, 300, 100))
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 0)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -1764,7 +1779,7 @@ object Modular3 {
         modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
         carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
         modAmount = (100, 300, 3000, 300))
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 0)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -1774,7 +1789,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -1782,7 +1797,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 500, 2000, 100))
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -1790,7 +1805,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -1798,7 +1813,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -1806,7 +1821,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 500, 2000, 100))
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 2)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -1814,7 +1829,7 @@ object Modular3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 2)
       .play   
   
     val startTimes3 = absolute(startTime + (gridTime * 8 * 2), durations)    
@@ -1824,7 +1839,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play
 
     Note(startTime = startTimes3(1), duration = durations(1), lengths = lengths(1))
@@ -1832,7 +1847,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (300, 3000, 500, 100))
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play  
     
     Note(startTime = startTimes3(2), duration = durations(2), lengths = lengths(2))
@@ -1840,7 +1855,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play
 
     Note(startTime = startTimes3(3), duration = durations(3), lengths = lengths(3))
@@ -1848,7 +1863,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play
     
     Note(startTime = startTimes3(4), duration = durations(4), lengths = lengths(4))
@@ -1856,7 +1871,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (300, 3000, 500, 100))
-      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f))
+      .pan(panValue = (0.8f, 0.6f, -0.2f, -0.4f), 4)
       .play  
       
     Note(startTime = startTimes3(5), duration = durations(5), lengths = lengths(5))
@@ -1864,7 +1879,7 @@ object Modular3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f))
+      .pan(panValue = (-0.4f, -0.2f, 0.6f, 0.8f), 4)
       .play  
     
     val startTimes4 = absolute(startTime + (gridTime * 8 * 3), durations)
@@ -1874,7 +1889,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
 
     Note(startTime = startTimes4(1), duration = durations(1), lengths = lengths(1))
@@ -1882,7 +1897,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (300, 3000, 500, 100))
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play  
 
     Note(startTime = startTimes4(2), duration = durations(2), lengths = lengths(2))
@@ -1890,7 +1905,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
       
     Note(startTime = startTimes4(3), duration = durations(3), lengths = lengths(3))
@@ -1898,7 +1913,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play  
 
     Note(startTime = startTimes4(4), duration = durations(4), lengths = lengths(4))
@@ -1906,7 +1921,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (300, 3000, 500, 100))
-      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f))
+      .pan(panValue = (0.9f, 0.4f, -0.4f, -0.9f), 6)
       .play
       
     Note(startTime = startTimes4(5), duration = durations(5), lengths = lengths(5))
@@ -1914,7 +1929,7 @@ object Modular3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f))
+      .pan(panValue = (-0.9f, -0.4f, 0.4f, 0.9f), 6)
       .play
 
     val development14startTime = startTime + (gridTime * 8 * 8)  
@@ -1961,7 +1976,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)    
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -1970,7 +1985,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .lowPass(filterFreq = filterFreq)  
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -1979,7 +1994,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)  
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -1988,7 +2003,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)  
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -1997,7 +2012,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .lowPass(filterFreq = filterFreq)  
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -2006,7 +2021,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -2017,7 +2032,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -2026,7 +2041,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .lowPass(filterFreq = filterFreq)  
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -2035,7 +2050,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -2044,7 +2059,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -2053,7 +2068,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -2062,7 +2077,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play 
       
     val development15startTime = startTime + (gridTime * 8 * 6)  
@@ -2110,7 +2125,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -2119,7 +2134,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .highPass(filterFreq = filterFreq)  
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -2128,7 +2143,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)  
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -2137,7 +2152,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -2146,7 +2161,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -2155,7 +2170,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -2166,7 +2181,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)  
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -2175,7 +2190,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -2184,7 +2199,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)  
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -2193,7 +2208,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -2202,7 +2217,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .highPass(filterFreq = filterFreq)  
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -2211,7 +2226,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)        
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play   
 
     val development16startTime = startTime + (gridTime * 8 * 6)  
@@ -2258,7 +2273,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -2267,7 +2282,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -2276,7 +2291,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -2285,7 +2300,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -2294,7 +2309,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -2303,7 +2318,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .lowPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -2314,7 +2329,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -2323,7 +2338,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -2332,7 +2347,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -2341,7 +2356,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -2350,7 +2365,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -2359,7 +2374,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .lowPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play  
       
     val development17startTime = startTime + (gridTime * 8 * 6)  
@@ -2406,7 +2421,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
 
     Note(startTime = startTimes1(1), duration = durations(1), lengths = lengths(1))
@@ -2415,7 +2430,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
   
     Note(startTime = startTimes1(2), duration = durations(2), lengths = lengths(2))
@@ -2424,7 +2439,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play  
 
     Note(startTime = startTimes1(3), duration = durations(3), lengths = lengths(3))
@@ -2433,7 +2448,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play
 
     Note(startTime = startTimes1(4), duration = durations(4), lengths = lengths(4))
@@ -2442,7 +2457,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (200, 2000, 300, 100))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f))
+    .pan(panValue = (-0.5f, -0.3f, 0.3f, 0.5f), 8)
     .play
   
     Note(startTime = startTimes1(5), duration = durations(5), lengths = lengths(5))
@@ -2451,7 +2466,7 @@ object Modular3 {
       carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
       modAmount = (100, 300, 2000, 200))
     .highPass(filterFreq = filterFreq)
-    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f))
+    .pan(panValue = (0.5f, 0.3f, -0.3f, -0.5f), 8)
     .play 
     
     val startTimes2 = absolute(startTime + (gridTime * 8), durations)
@@ -2462,7 +2477,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play
     
     Note(startTime = startTimes2(1), duration = durations(1), lengths = lengths(1))
@@ -2471,7 +2486,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play  
 
     Note(startTime = startTimes2(2), duration = durations(2), lengths = lengths(2))
@@ -2480,7 +2495,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play 
       
     Note(startTime = startTimes2(3), duration = durations(3), lengths = lengths(3))
@@ -2489,7 +2504,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play
     
     Note(startTime = startTimes2(4), duration = durations(4), lengths = lengths(4))
@@ -2498,7 +2513,7 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (200, 500, 2000, 100))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f))
+      .pan(panValue = (-0.8f, -0.6f, 0.2f, 0.4f), 10)
       .play  
 
     Note(startTime = startTimes2(5), duration = durations(5), lengths = lengths(5))
@@ -2507,8 +2522,65 @@ object Modular3 {
         carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
         modAmount = (100, 2000, 500, 200))
       .highPass(filterFreq = filterFreq)
-      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f))
+      .pan(panValue = (0.4f, 0.2f, -0.6f, -0.8f), 10)
       .play   
+  }
+
+
+  def recapitulation(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+    println(s"Exposition1 at startTime $startTime ")
+    val spectrum = spectrums.head
+    val fact = facts.head
+    val fact2 = spectrum.head /spectrum(1)
+    val spectrum2 = makeSpectrum2(fact2, fact, 50)
+    val fact3 = spectrum.head / spectrum(2)
+    val spectrum3 = makeSpectrum2(fact3, fact, 50)
+
+    println(s"Spectrum ${spectrum.zipWithIndex}")
+    println(s"Spectrum2 ${spectrum2.zipWithIndex}")
+    println(s"Spectrum3 ${spectrum3.zipWithIndex}")
+    println(s"The pulse? ${spectrum3.head / 7}")
+
+    val duration = spectrum.head // 65.4064
+    val pulseDurationDivision = duration / 34
+    val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
+
+    val delayAudioBus = staticAudioBus()
+    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+      .withNrOfChannels(2)
+      .addAction(TAIL_ACTION)
+      .nodeId(EFFECT)
+    delay.getOutputBus.staticBus(getRealOutputBus(0))
+    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+    player.sendNew(absoluteTimeToMillis(startTime), graph)
+
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1f, 0.2f), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .bandPass(
+        lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+        higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
+      .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))  
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
+      .play 
+
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.6f, 0.5f), freq = (spectrum3(0) / 11, (spectrum3(1) / 11) * 1.004f, (spectrum3(1) / 11) * 0.997f, spectrum3(2) / 11), startValue = 0.1f)
+      .bandPass(
+        lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
+        higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))
+      .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))  
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
+      .play       
+
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.8f, 0.9f), freq = (spectrum3(0) / 11, spectrum3(1) / 11 * 0.997f, (spectrum3(1) / 11) * 1.004f, spectrum3(2) / 11), startValue = 0.1f)
+      .bandPass(
+        lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
+        higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))
+      .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
+      .play 
   }
 
   def main(args: Array[String]): Unit = {
@@ -2536,7 +2608,8 @@ object Modular3 {
     exposition6(startTimes(5))
     exposition7(startTimes(6))
     */
-    development11()
+    
+    //development11()
 
     // 6, 9 12, 15
 
@@ -2552,6 +2625,8 @@ object Modular3 {
     High: 0, 4, 5
     Low 1, 2, 3, 6
     */
+    recapitulation()
+
     spectrums
       .zipWithIndex
       .foreach { 

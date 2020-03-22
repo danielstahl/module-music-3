@@ -4,12 +4,12 @@
 
 (
 s = Server.local;
-s.options.outDevice = "Built-in Output";
+//s.options.outDevice = "Built-in Output";
 //s.options.outDevice = "Scarlett 2i2 USB";
 //s.options.outDevice = "MOMENTUM M2 AEBT";
 //s.options.outDevice = "Soundflower (2ch)";
-//s.options.outDevice = "Soundflower Aggregate";
-//s.options.numOutputBusChannels = 66;
+s.options.outDevice = "Soundflower Aggregate";
+s.options.numOutputBusChannels = 66;
 s.options.blockSize = 128;
 s.options.sampleRate = 96000;
 s.options.numBuffers = 2056;

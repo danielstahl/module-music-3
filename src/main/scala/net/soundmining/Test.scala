@@ -362,7 +362,7 @@ object Test {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 0)
        .play
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
@@ -370,7 +370,7 @@ object Test {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
        .play  
        
     Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
@@ -378,7 +378,7 @@ object Test {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play
   }
 
@@ -403,7 +403,7 @@ object Test {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f))
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 0)
       .play    
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (3, 4, 1))
@@ -411,7 +411,7 @@ object Test {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play
   }
 
@@ -436,7 +436,7 @@ object Test {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 0)
       .play    
 
 
@@ -445,7 +445,7 @@ object Test {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
@@ -453,7 +453,7 @@ object Test {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play  
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
@@ -461,7 +461,7 @@ object Test {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 0)
       .play 
   }
 
@@ -482,7 +482,7 @@ object Test {
           modFreq = (spectrum2(3) * fact, spectrum2(3) * fact, spectrum2(3) * fact, spectrum2(3) * fact),
           carrierFreq = (spectrum2(3), spectrum2(3), spectrum2(3), spectrum2(3)),
           modAmount = (100, 200, 500, 300))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play 
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
@@ -490,7 +490,7 @@ object Test {
           modFreq = (spectrum2(5) * fact, spectrum2(5) * fact, spectrum2(5) * fact, spectrum2(5) * fact),
           carrierFreq = (spectrum2(5), spectrum2(5), spectrum2(5), spectrum2(5)),
           modAmount = (200, 500, 300, 100))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play   
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
@@ -498,7 +498,7 @@ object Test {
           modFreq = (spectrum2(7) * fact, spectrum2(7) * fact, spectrum2(7) * fact, spectrum2(7) * fact),
           carrierFreq = (spectrum2(7), spectrum2(7), spectrum2(7), spectrum2(7)),
           modAmount = (300, 200, 500, 100))
-      .pan(panValue = (0f, 0f, 0f, 0f))
+      .pan(panValue = (0f, 0f, 0f, 0f), 0)
       .play
   }
 
@@ -523,7 +523,7 @@ object Test {
           modFreq = (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 0)
       .play    
 
     Modular3.Note(startTime = startTime + 10, duration = 8, lengths = (2, 5, 1))
@@ -532,7 +532,7 @@ object Test {
         carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
         modAmount = (100, 300, 3000, 300))
       .ring(ringModFreq = (spectrum(7), spectrum(7), spectrum(7), spectrum(7)))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play
   }
 
@@ -558,7 +558,7 @@ object Test {
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300)) 
        .lowPass(filterFreq = (2000, 2000, 2000, 2000))   
-       .pan(panValue = (0f, 0f, 0f, 0f))
+       .pan(panValue = (0f, 0f, 0f, 0f), 0)
        .play
 
     Modular3.Note(startTime = startTime + 10, duration = 8, lengths = (1, 5, 2))
@@ -567,7 +567,7 @@ object Test {
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
        .highPass(filterFreq = (2000, 2000, 2000, 2000))   
-       .pan(panValue = (0f, 0f, 0f, 0f))
+       .pan(panValue = (0f, 0f, 0f, 0f), 0)
        .play
   }
 
@@ -594,13 +594,13 @@ object Test {
     Modular3.Note(startTime = startTime, duration = 13, lengths = (2, 8, 3))
       .pulse(ampValue = (0.5f, 0.5f), freq = (spectrum2(0), spectrum2(1), spectrum2(1), spectrum2(2)))
       .bandPass(lowerFreq = (1000, 1000, 4000, 4000), higherFreq = (1200, 1200, 6000, 6000))   
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play 
 
     Modular3.Note(startTime = startTime, duration = 13, lengths = (3, 8, 2))
       .pulse(ampValue = (0.5f, 0.5f), freq = (spectrum2(3), spectrum2(2), spectrum2(2), spectrum2(1)))
       .bandPass(lowerFreq = (800, 800, 300, 300), higherFreq = (1000, 1000, 500, 500))   
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), 0)
       .play       
   }
 
@@ -623,7 +623,7 @@ object Test {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f))
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 0)
        .play
 
        /*
@@ -635,7 +635,7 @@ object Test {
       .bandPass(
         lowerFreq = (spectrum(15), spectrum(25), spectrum(21), spectrum(29)), 
         higherFreq = (spectrum(30), spectrum(33), spectrum(35), spectrum(33)))   
-      .pan(panValue = (-0.8f, 0, 0, 0.8f))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play 
 
     Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
@@ -643,7 +643,7 @@ object Test {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f))
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
        .play  
        
     Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
@@ -651,7 +651,7 @@ object Test {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f))
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play
   }
 
@@ -690,7 +690,7 @@ object Test {
         lowerFreq = (50, 80, 70, 90), 
         higherFreq = (110, 130, 120, 100))
   
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = Some(delayAudioBus))
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
     Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
@@ -698,7 +698,7 @@ object Test {
       .bandPass(
         lowerFreq = (1000, 1500, 1200, 1600), 
         higherFreq = (2000, 1700, 1800, 1900))   
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = Some(delayAudioBus))
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
     Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
@@ -706,7 +706,7 @@ object Test {
       .bandPass(
         lowerFreq = (6000, 6500, 6400, 6700), 
         higherFreq = (7500, 6900, 7100, 7600))   
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = Some(delayAudioBus))
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play            
   }
 
