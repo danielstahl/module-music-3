@@ -1,15 +1,17 @@
 package net.soundmining
 
-import net.soundmining.Instrument.{EnvCurve, TAIL_ACTION, setupNodes, EFFECT}
-import net.soundmining.Instruments._
-import net.soundmining.ModularInstrument.{AudioInstrument, ControlInstrument, StaticAudioBusInstrument}
 import net.soundmining.Note.noteToHertz
 import net.soundmining.Spectrum._
-import net.soundmining.Utils.absoluteTimeToMillis
+import net.soundmining.synth.Utils.absoluteTimeToMillis
+import net.soundmining.synth._
+import net.soundmining.synth.Instrument._
+import net.soundmining.modular.ModularInstrument._
+import net.soundmining.modular.ModularSynth._
 import Melody._
 import scala.io.StdIn
 import scala.util.Random
 import Modular3.Note
+import net.soundmining.synth.SuperColliderClient
 
 object Test {
 /*
@@ -19,7 +21,7 @@ object Test {
   0.001 / 0.002
   0.001 / 0.02
   */
-  def playSine(startTime: Float, freq: Float, output: StaticAudioBusInstrument)(implicit player: MusicPlayer): Unit = {
+  def playSine(startTime: Double, freq: Double, output: StaticAudioBusInstrument)(implicit client: SuperColliderClient): Unit = {
     val amp = percControl(0.01f, 1.0f, 0.02f, Right(Instrument.LINEAR))
     val freqControl = staticControl(freq)
     val osc = sineOsc(amp, freqControl)
@@ -27,10 +29,10 @@ object Test {
       .addAction(TAIL_ACTION)
     
     val graph = osc.buildGraph(startTime, 0.1f, osc.graph(Seq()))
-    player.sendNew(absoluteTimeToMillis(startTime), graph)  
+    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
   }
 
-  def playFm(startTime: Float, duration: Float, ampValue: Float, attackTime: Float, modFreq: Float, carrierFreq: Float, modAmount: (Float, Float), modAttackTime: Float, output: StaticAudioBusInstrument)(implicit player: MusicPlayer): Unit = {
+  def playFm(startTime: Double, duration: Double, ampValue: Double, attackTime: Double, modFreq: Double, carrierFreq: Double, modAmount: (Double, Double), modAttackTime: Double, output: StaticAudioBusInstrument)(implicit client: SuperColliderClient): Unit = {
     val amp = percControl(0.01f, ampValue, attackTime, Right(Instrument.SINE))
     val modAmountControl = percControl(modAmount._1, modAmount._2, modAttackTime, Right(Instrument.SINE))
     val modulator = sineOsc(modAmountControl, staticControl(modFreq))
@@ -38,10 +40,10 @@ object Test {
       .withOutput(output)
       .addAction(TAIL_ACTION)
     val graph = fm.buildGraph(startTime, duration, fm.graph(Seq()))
-    player.sendNew(absoluteTimeToMillis(startTime), graph)  
+    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
   }
 
-  def simpleFm(startTime: Float, duration: Float, ampValue: Float, attackTime: Float, modFact: Float, carrierFreq: Float, modAmount: (Float, Float), modAttackTime: Float, panValue: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def simpleFm(startTime: Double, duration: Double, ampValue: Double, attackTime: Double, modFact: Double, carrierFreq: Double, modAmount: (Double, Double), modAttackTime: Double, panValue: Double = 0.0)(implicit client: SuperColliderClient): Unit = {
     val modFreq = carrierFreq * modFact
     val amp = percControl(0.01f, ampValue, attackTime, Right(Instrument.LINEAR))
     val modAmountControl = percControl(modAmount._1, modAmount._2, modAttackTime, Right(Instrument.LINEAR))
@@ -55,10 +57,10 @@ object Test {
       
     pan.getOutputBus.staticBus(0)    
     val graph = pan.buildGraph(startTime, duration, pan.graph(Seq()))
-    player.sendNew(absoluteTimeToMillis(startTime), graph)  
+    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))  
   }
 
-  def test1(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test1(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
     val fact = makeFact(noteToHertz('c2), noteToHertz('fiss3))
     val spectrum = makeSpectrum2(noteToHertz('c2), fact, 50)
 
@@ -74,7 +76,7 @@ object Test {
       
     pan.getOutputBus.staticBus(0)  
     val graph = pan.buildGraph(startTime, 10f, pan.graph(Seq()))
-    player.sendNew(absoluteTimeToMillis(startTime), graph)
+    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
 
     val times = absolute(startTime, 
       Seq(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f))
@@ -96,7 +98,7 @@ object Test {
     playSine(times(14), spectrum(16), delayAudioBus)
   }
 
-  def test2(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test2(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val fact = makeFact(noteToHertz('c2), noteToHertz('fiss3))
     val spectrum = makeSpectrum2(noteToHertz('c2), fact, 50)
 
@@ -119,7 +121,7 @@ object Test {
       
     pan.getOutputBus.staticBus(0)  
     val graph = pan.buildGraph(startTime, 10f, pan.graph(Seq()))
-    player.sendNew(absoluteTimeToMillis(startTime), graph)
+    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
 
     val times = absolute(startTime, 
       Seq(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f))
@@ -168,7 +170,7 @@ object Test {
   Long melodies with ornament that have short notes.
   Parhaps canon at different tempos. Very slowly and very fast.
   */
-  def test3(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test3(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val facts = Seq(
       makeFact(noteToHertz('c2), noteToHertz('fiss3)),
       makeFact(noteToHertz('diss2), noteToHertz('d3)),
@@ -220,7 +222,7 @@ object Test {
     */
   }
 
-  def test4(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test4(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val baseNotes = Seq(
       (noteToHertz('c2), noteToHertz('fiss3)),
       (noteToHertz('diss2), noteToHertz('d3)), ///
@@ -270,7 +272,7 @@ object Test {
   /**
    * Explore low tones
   */
-  def test5(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test5(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -304,7 +306,7 @@ object Test {
   /*
   Explore low tones for all spectrum
   */
-  def test6(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test6(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val baseNotes = Seq(
       (noteToHertz('c2), noteToHertz('fiss3)),
       (noteToHertz('diss2), noteToHertz('d3)), ///
@@ -344,7 +346,7 @@ object Test {
   /*
   Test fm with threeblock controls. Middle theme.
   */
-  def test7(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test7(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -385,7 +387,7 @@ object Test {
   /*
   Lower theme.
   */
-  def test8(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test8(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -418,7 +420,7 @@ object Test {
   /*
   Higher theme
   */
-  def test9(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test9(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -468,7 +470,7 @@ object Test {
   /*
   Explore the lower theme
   */
-  def test10(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test10(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -503,7 +505,7 @@ object Test {
   }
 
 
-  def test11(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test11(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -539,7 +541,7 @@ object Test {
   /*
   Test moog filter
   */
-  def test12(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test12(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -579,7 +581,7 @@ object Test {
   Todo. Combine this with the ordinary theme. Filter them with a wide
   band pass filter.
   */
-  def test13(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test13(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -607,7 +609,7 @@ object Test {
   /*
   test to combine the original theme and the pulse theme. 
   */
-  def test14(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test14(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -660,7 +662,7 @@ object Test {
 
   Try to have a common slow delay (after the pan)
   */
-  def test15(startTime: Float = 0f)(implicit player: MusicPlayer): Unit = {
+  def test15(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
@@ -682,7 +684,7 @@ object Test {
       .nodeId(EFFECT)
     delay.getOutputBus.staticBus(0)
     val graph = delay.buildGraph(startTime, 60, delay.graph(Seq()))
-    player.sendNew(absoluteTimeToMillis(startTime), graph)
+    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
      
     Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.2f, 0.3f), freq = (spectrum2(0) / 7, spectrum2(1) / 7, spectrum2(1) / 7, spectrum2(2) / 7))
@@ -709,7 +711,7 @@ object Test {
       .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
       .play            
   }
-
+/*
   def main(args: Array[String]): Unit = {
     implicit val player: MusicPlayer = MusicPlayer()
     player.startPlay()
@@ -732,5 +734,5 @@ object Test {
     player.stopPlay()
     
   }
-
+*/
 }
