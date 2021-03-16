@@ -19,11 +19,11 @@ Theme and dialouge over an ambient background. Lou Reed, "me, I just don't care 
 object Modular3 {
   implicit val client: SuperColliderClient = SuperColliderClient()
   val SYNTH_DIR = "/Users/danielstahl/Documents/Projects/soundmining-modular/src/main/sc/synths"
-  //val NUM_OUTPUT_BUSES: Int = 66
-  val NUM_OUTPUT_BUSES: Int = 2
+  val NUM_OUTPUT_BUSES: Int = 16
+  //val NUM_OUTPUT_BUSES: Int = 2
 
-  val STATIC_FM_AMP = 15.0f
-  val STATIC_PULSE_AMP = 1.0f
+  val STATIC_FM_AMP = 15.0 / 70
+  val STATIC_PULSE_AMP = 1.0 / 70
 
   def init(): Unit = {
         println("Starting up SupderCollider client")
@@ -87,7 +87,7 @@ object Modular3 {
     }
 
     def pulse(ampValue: (Double, Double), freq: (Double, Double, Double, Double), startValue: Double = 0.001): Note = {
-      val amp = threeBlock(lengths = lengths, vals = (startValue, ampValue._1 * STATIC_PULSE_AMP, ampValue._2 * STATIC_PULSE_AMP, 0.001))
+      val amp = threeBlock(lengths = lengths, vals = (startValue * STATIC_PULSE_AMP, ampValue._1 * STATIC_PULSE_AMP, ampValue._2 * STATIC_PULSE_AMP, 0.001))
       val freqControl = threeBlock(lengths = lengths, vals = freq)
       val pulse = pulseOsc(ampBus = amp, freqBus = freqControl)
         .addAction(TAIL_ACTION)
