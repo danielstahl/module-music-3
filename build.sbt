@@ -1,4 +1,4 @@
-name := "arpeggio-i"
+name := "module-music-3"
 
 version := "1.0-SNAPSHOT"
 
