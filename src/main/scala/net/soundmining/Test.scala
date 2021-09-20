@@ -10,7 +10,7 @@ import net.soundmining.modular.ModularSynth._
 import Melody._
 import scala.io.StdIn
 import scala.util.Random
-import Modular3.Note
+import ModuleMusic3.Note
 import net.soundmining.synth.SuperColliderClient
 
 object Test {
@@ -61,8 +61,8 @@ object Test {
   }
 
   def test1(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
-    val fact = makeFact(noteToHertz('c2), noteToHertz('fiss3))
-    val spectrum = makeSpectrum2(noteToHertz('c2), fact, 50)
+    val fact = makeFact(noteToHertz("c2"), noteToHertz("fiss3"))
+    val spectrum = makeSpectrum2(noteToHertz("c2"), fact, 50)
 
     val delayAudioBus = staticAudioBus()
     val delayAmp = staticControl(1)
@@ -99,8 +99,8 @@ object Test {
   }
 
   def test2(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val fact = makeFact(noteToHertz('c2), noteToHertz('fiss3))
-    val spectrum = makeSpectrum2(noteToHertz('c2), fact, 50)
+    val fact = makeFact(noteToHertz("c2"), noteToHertz("fiss3"))
+    val spectrum = makeSpectrum2(noteToHertz("c2"), fact, 50)
 
     val delayAudioBus = staticAudioBus()
     val delayAmp = staticControl(0.5f)
@@ -172,17 +172,17 @@ object Test {
   */
   def test3(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val facts = Seq(
-      makeFact(noteToHertz('c2), noteToHertz('fiss3)),
-      makeFact(noteToHertz('diss2), noteToHertz('d3)),
-      makeFact(noteToHertz('hess2), noteToHertz('g3)),
-      makeFact(noteToHertz('ciss2), noteToHertz('diss3)),
-      makeFact(noteToHertz('h1), noteToHertz('giss3)),
-      makeFact(noteToHertz('diss2), noteToHertz('a3)),
-      makeFact(noteToHertz('d2), noteToHertz('f3))
+      makeFact(noteToHertz("c2"), noteToHertz("fiss3")),
+      makeFact(noteToHertz("diss2"), noteToHertz("d3")),
+      makeFact(noteToHertz("hess2"), noteToHertz("g3")),
+      makeFact(noteToHertz("ciss2"), noteToHertz("diss3")),
+      makeFact(noteToHertz("h1"), noteToHertz("giss3")),
+      makeFact(noteToHertz("diss2"), noteToHertz("a3")),
+      makeFact(noteToHertz("d2"), noteToHertz("f3"))
     )
 
-    val f1 = makeFact(noteToHertz('c2), noteToHertz('fiss3))
-    val spectrum1 = makeSpectrum2(noteToHertz('c2), f1, 50)
+    val f1 = makeFact(noteToHertz("c2"), noteToHertz("fiss3"))
+    val spectrum1 = makeSpectrum2(noteToHertz("c2"), f1, 50)
     val f12 = spectrum1(1) / spectrum1.head
     val f13 = spectrum1(2) / spectrum1.head
 
@@ -224,13 +224,13 @@ object Test {
 
   def test4(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val baseNotes = Seq(
-      (noteToHertz('c2), noteToHertz('fiss3)),
-      (noteToHertz('diss2), noteToHertz('d3)), ///
-      (noteToHertz('hess2), noteToHertz('g3)),
-      (noteToHertz('ciss2), noteToHertz('diss3)),
-      (noteToHertz('h1), noteToHertz('giss3)),
-      (noteToHertz('diss2), noteToHertz('a3)),
-      (noteToHertz('d2), noteToHertz('f3))
+      (noteToHertz("c2"), noteToHertz("fiss3")),
+      (noteToHertz("diss2"), noteToHertz("d3")), ///
+      (noteToHertz("hess2"), noteToHertz("g3")),
+      (noteToHertz("ciss2"), noteToHertz("diss3")),
+      (noteToHertz("h1"), noteToHertz("giss3")),
+      (noteToHertz("diss2"), noteToHertz("a3")),
+      (noteToHertz("d2"), noteToHertz("f3"))
     )
 
     val facts = baseNotes.map {
@@ -273,7 +273,7 @@ object Test {
    * Explore low tones
   */
   def test5(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -308,13 +308,13 @@ object Test {
   */
   def test6(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
     val baseNotes = Seq(
-      (noteToHertz('c2), noteToHertz('fiss3)),
-      (noteToHertz('diss2), noteToHertz('d3)), ///
-      (noteToHertz('hess2), noteToHertz('g3)),
-      (noteToHertz('ciss2), noteToHertz('diss3)),
-      (noteToHertz('h1), noteToHertz('giss3)),
-      (noteToHertz('diss2), noteToHertz('a3)),
-      (noteToHertz('d2), noteToHertz('f3)))
+      (noteToHertz("c2"), noteToHertz("fiss3")),
+      (noteToHertz("diss2"), noteToHertz("d3")), ///
+      (noteToHertz("hess2"), noteToHertz("g3")),
+      (noteToHertz("ciss2"), noteToHertz("diss3")),
+      (noteToHertz("h1"), noteToHertz("giss3")),
+      (noteToHertz("diss2"), noteToHertz("a3")),
+      (noteToHertz("d2"), noteToHertz("f3")))
 
     val facts = baseNotes.map {
       case (baseNote, octave) => makeFact(baseNote, octave)
@@ -347,7 +347,7 @@ object Test {
   Test fm with threeblock controls. Middle theme.
   */
   def test7(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -359,7 +359,7 @@ object Test {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -367,7 +367,7 @@ object Test {
        .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 0)
        .play
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
@@ -375,7 +375,7 @@ object Test {
        .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
        .play  
        
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
@@ -388,7 +388,7 @@ object Test {
   Lower theme.
   */
   def test8(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -400,7 +400,7 @@ object Test {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
@@ -408,7 +408,7 @@ object Test {
       .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 0)
       .play    
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (3, 4, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (3, 4, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
@@ -421,7 +421,7 @@ object Test {
   Higher theme
   */
   def test9(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -433,7 +433,7 @@ object Test {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
@@ -442,7 +442,7 @@ object Test {
       .play    
 
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),  
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
@@ -450,7 +450,7 @@ object Test {
       .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
@@ -458,7 +458,7 @@ object Test {
       .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play  
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
@@ -471,7 +471,7 @@ object Test {
   Explore the lower theme
   */
   def test10(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -479,7 +479,7 @@ object Test {
     val fact3 = spectrum(2) / spectrum.head
     val spectrum2 = makeSpectrum2(fact2, fact, 50)
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum2(3) * fact, spectrum2(3) * fact, spectrum2(3) * fact, spectrum2(3) * fact),
           carrierFreq = (spectrum2(3), spectrum2(3), spectrum2(3), spectrum2(3)),
@@ -487,7 +487,7 @@ object Test {
       .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play 
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum2(5) * fact, spectrum2(5) * fact, spectrum2(5) * fact, spectrum2(5) * fact),
           carrierFreq = (spectrum2(5), spectrum2(5), spectrum2(5), spectrum2(5)),
@@ -495,7 +495,7 @@ object Test {
       .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 0)
       .play   
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq = (spectrum2(7) * fact, spectrum2(7) * fact, spectrum2(7) * fact, spectrum2(7) * fact),
           carrierFreq = (spectrum2(7), spectrum2(7), spectrum2(7), spectrum2(7)),
@@ -506,7 +506,7 @@ object Test {
 
 
   def test11(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -520,7 +520,7 @@ object Test {
     simpleFm(0, 20f, 0.5f, 10f, fact3, spectrum2(7), (spectrum(26), spectrum(46)), 10f, 0.5f)
     */
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -528,7 +528,7 @@ object Test {
       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 0)
       .play    
 
-    Modular3.Note(startTime = startTime + 10, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime + 10, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
         modFreq = (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
         carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -542,7 +542,7 @@ object Test {
   Test moog filter
   */
   def test12(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -554,7 +554,7 @@ object Test {
     println(s"spectrum $spectrum")
     println(s"spectrum2 $spectrum2")
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -563,7 +563,7 @@ object Test {
        .pan(panValue = (0f, 0f, 0f, 0f), 0)
        .play
 
-    Modular3.Note(startTime = startTime + 10, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime + 10, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.9f, 0.9f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -582,7 +582,7 @@ object Test {
   band pass filter.
   */
   def test13(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     
@@ -593,13 +593,13 @@ object Test {
     println(s"fact $fact fact2 $fact2 fact3 $fact3")
     println(s"spectrum2 $spectrum2")
 
-    Modular3.Note(startTime = startTime, duration = 13, lengths = (2, 8, 3))
+    ModuleMusic3.Note(startTime = startTime, duration = 13, lengths = (2, 8, 3))
       .pulse(ampValue = (0.5f, 0.5f), freq = (spectrum2(0), spectrum2(1), spectrum2(1), spectrum2(2)))
       .bandPass(lowerFreq = (1000, 1000, 4000, 4000), higherFreq = (1200, 1200, 6000, 6000))   
       .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play 
 
-    Modular3.Note(startTime = startTime, duration = 13, lengths = (3, 8, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 13, lengths = (3, 8, 2))
       .pulse(ampValue = (0.5f, 0.5f), freq = (spectrum2(3), spectrum2(2), spectrum2(2), spectrum2(1)))
       .bandPass(lowerFreq = (800, 800, 300, 300), higherFreq = (1000, 1000, 500, 500))   
       .pan(panValue = (0f, 0.5f, -0.5f, 0f), 0)
@@ -610,7 +610,7 @@ object Test {
   test to combine the original theme and the pulse theme. 
   */
   def test14(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     println(spectrum.zipWithIndex)
@@ -620,7 +620,7 @@ object Test {
     val spectrum2 = makeSpectrum2(fact3, fact, 50)
     println(spectrum2.zipWithIndex)
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f), 
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
@@ -632,7 +632,7 @@ object Test {
        This doesn't really work. Maybe it should work better as a call and response?
        E.g you response to the main theme with this
        */
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .pulse(ampValue = (0.5f, 0.4f), freq = (spectrum2(3), spectrum2(7), spectrum2(5), spectrum2(2)))
       .bandPass(
         lowerFreq = (spectrum(15), spectrum(25), spectrum(21), spectrum(29)), 
@@ -640,7 +640,7 @@ object Test {
       .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
       .play 
 
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (1, 5, 2))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
@@ -648,7 +648,7 @@ object Test {
        .pan(panValue = (-0.8f, 0, 0, 0.8f), 0)
        .play  
        
-    Modular3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
+    ModuleMusic3.Note(startTime = startTime, duration = 8, lengths = (2, 5, 1))
       .fm(ampValue = (0.5f, 0.5f),
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
@@ -663,7 +663,7 @@ object Test {
   Try to have a common slow delay (after the pan)
   */
   def test15(startTime: Float = 0f)(implicit client: SuperColliderClient): Unit = {
-    val (baseNote, octave) = (noteToHertz('c2), noteToHertz('fiss3))
+    val (baseNote, octave) = (noteToHertz("c2"), noteToHertz("fiss3"))
     val fact = makeFact(baseNote, octave)
     val spectrum = makeSpectrum2(baseNote, fact, 50)
     println(s" ${spectrum.zipWithIndex}")
@@ -677,7 +677,7 @@ object Test {
     println(s"spectrum2 ${spectrum2.zipWithIndex}")
 
     val delayAudioBus = staticAudioBus()
-    val delayAmp = Modular3.threeBlock(lengths = (10, 40, 10), vals = (0.001f, 0.05f, 0.03f, 0.001f))
+    val delayAmp = ModuleMusic3.threeBlock(lengths = (10, 40, 10), vals = (0.001f, 0.05f, 0.03f, 0.001f))
     val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum2(4), decayTime = spectrum2(9))
       .withNrOfChannels(2)
       .addAction(TAIL_ACTION)
@@ -686,7 +686,7 @@ object Test {
     val graph = delay.buildGraph(startTime, 60, delay.graph(Seq()))
     client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
      
-    Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
+    ModuleMusic3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.2f, 0.3f), freq = (spectrum2(0) / 7, spectrum2(1) / 7, spectrum2(1) / 7, spectrum2(2) / 7))
       .bandPass(
         lowerFreq = (50, 80, 70, 90), 
@@ -695,7 +695,7 @@ object Test {
       .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
       .play 
 
-    Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
+    ModuleMusic3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.6f, 0.5f), freq = (spectrum2(0) / 7.02f, spectrum2(1) / 7.01f, spectrum2(1) / 7.02f, spectrum2(2) / 7.01f))
       .bandPass(
         lowerFreq = (1000, 1500, 1200, 1600), 
@@ -703,7 +703,7 @@ object Test {
       .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
       .play       
 
-    Modular3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
+    ModuleMusic3.Note(startTime = startTime, duration = 60, lengths = (10, 40, 10))
       .pulse(ampValue = (0.5f, 0.6f), freq = (spectrum2(0) / 6.98f, spectrum2(1) / 6.99f, spectrum2(1) / 6.98f, spectrum2(2) / 6.99f))
       .bandPass(
         lowerFreq = (6000, 6500, 6400, 6700), 

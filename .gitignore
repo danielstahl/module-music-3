@@ -8,4 +8,5 @@ project/target
 project/metals.sbt
 project/project
 .vscode
+.bsp
 

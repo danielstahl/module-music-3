@@ -2,7 +2,7 @@ name := "arpeggio-i"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.6"
 
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 
@@ -16,9 +16,9 @@ libraryDependencies += "com.illposed.osc" % "javaosc-core" % "0.2"
 
 initialCommands in console := """
     |import net.soundmining._
-    |Modular3.init()
+    |ModuleMusic3.init()
 """.trim().stripMargin
 
 cleanupCommands in console += """
-    Modular3.stop()
+    ModuleMusic3.stop()
 """

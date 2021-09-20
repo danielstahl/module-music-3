@@ -16,7 +16,7 @@ import SuperColliderClient._
 Maybe some kind of dialogue. Question, response. And some background that is not moving.
 Theme and dialouge over an ambient background. Lou Reed, "me, I just don't care at all".
 */
-object Modular3 {
+object ModuleMusic3 {
   implicit val client: SuperColliderClient = SuperColliderClient()
   val SYNTH_DIR = "/Users/danielstahl/Documents/Projects/soundmining-modular/src/main/sc/synths"
   val NUM_OUTPUT_BUSES: Int = 16
@@ -193,13 +193,13 @@ object Modular3 {
   }
 
   val baseNotes = Seq(
-      (noteToHertz('c2), noteToHertz('fiss3)),
-      (noteToHertz('diss2), noteToHertz('d3)), 
-      (noteToHertz('hess2), noteToHertz('g3)),
-      (noteToHertz('ciss2), noteToHertz('diss3)),
-      (noteToHertz('h1), noteToHertz('giss3)),
-      (noteToHertz('diss2), noteToHertz('a3)),
-      (noteToHertz('d2), noteToHertz('f3)))
+      (noteToHertz("c2"), noteToHertz("fiss3")),
+      (noteToHertz("diss2"), noteToHertz("d3")),
+      (noteToHertz("hess2"), noteToHertz("g3")),
+      (noteToHertz("ciss2"), noteToHertz("diss3")),
+      (noteToHertz("h1"), noteToHertz("giss3")),
+      (noteToHertz("diss2"), noteToHertz("a3")),
+      (noteToHertz("d2"), noteToHertz("f3")))
 
   val facts = baseNotes.map {
     case (baseNote, octave) => makeFact(baseNote, octave)
