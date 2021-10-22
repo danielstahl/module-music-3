@@ -14,11 +14,11 @@ libraryDependencies += "net.soundmining" %% "soundmining-modular" % "1.0-SNAPSHO
 
 libraryDependencies += "com.illposed.osc" % "javaosc-core" % "0.2"
 
-initialCommands in console := """
+console / initialCommands := """
     |import net.soundmining._
     |ModuleMusic3.init()
 """.trim().stripMargin
 
-cleanupCommands in console += """
+console / cleanupCommands += """
     ModuleMusic3.stop()
 """

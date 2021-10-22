@@ -1,15 +1,13 @@
 package net.soundmining
 
-import net.soundmining.synth.Instrument.{EnvCurve, TAIL_ACTION, setupNodes, EFFECT}
+import net.soundmining.synth.Instrument.{EFFECT, EnvCurve, TAIL_ACTION, setupNodes}
 import net.soundmining.modular.ModularInstrument._
-import net.soundmining.modular.ModularSynth._
+import net.soundmining.modular.ModularSynth.{sineOsc, _}
 import net.soundmining.synth._
 import net.soundmining.Note.noteToHertz
 import net.soundmining.Spectrum._
 import net.soundmining.synth.Utils.absoluteTimeToMillis
 import Melody._
-import scala.io.StdIn
-import scala.util.Random
 import SuperColliderClient._
 
 /*
@@ -19,14 +17,15 @@ Theme and dialouge over an ambient background. Lou Reed, "me, I just don't care 
 object ModuleMusic3 {
   implicit val client: SuperColliderClient = SuperColliderClient()
   val SYNTH_DIR = "/Users/danielstahl/Documents/Projects/soundmining-modular/src/main/sc/synths"
-  val NUM_OUTPUT_BUSES: Int = 16
+  val NUM_OUTPUT_BUSES: Int = 64
   //val NUM_OUTPUT_BUSES: Int = 2
 
   val STATIC_FM_AMP = 15.0 / 70
-  val STATIC_PULSE_AMP = 1.0 / 70
+  //val STATIC_PULSE_AMP = 1.0 / 70
+  val STATIC_PULSE_AMP = 1.0
 
   def init(): Unit = {
-        println("Starting up SupderCollider client")
+        println("Starting up SuperCollider client")
         client.start
         Instrument.setupNodes(client)
         client.send(loadDir(SYNTH_DIR))
@@ -36,7 +35,7 @@ object ModuleMusic3 {
   }
 
   def stop(): Unit = {
-      println("Stopping Supercollider client")
+      println("Stopping SuperCollider client")
       client.stop
   }
 
@@ -94,6 +93,13 @@ object ModuleMusic3 {
 
       audio = Some(pulse)
       this  
+    }
+
+    def sineSub(freq: Double, attackTime: Double = 0.1, releaseTime: Double = 0.1): Note = {
+      audio.foreach(a => {
+        audio = Some(sineOsc(soundAmplitudeControl(a, attackTime, releaseTime).addAction(TAIL_ACTION), staticControl(freq)).addAction(TAIL_ACTION))
+      })
+      this
     }
 
     def ring(ringModFreq: (Double, Double, Double, Double)): Note = {
@@ -163,18 +169,20 @@ object ModuleMusic3 {
     }
 
     def pan(panValue: (Double, Double, Double, Double), output: StaticAudioBusInstrument): Note = {
-      audio.map(a => {
-        val panControl = threeBlock(lengths = lengths, vals = panValue)  
+      audio.foreach(a => {
+        val panControl = threeBlock(lengths = lengths, vals = panValue)
         val pan = panning(a, panControl)
           .addAction(TAIL_ACTION)
-        pan.withOutput(output)
+          .withNrOfChannels(2)
+        pan.getOutputBus.staticBus(output.getOutputBus.busValue.get)
+        //pan.withOutput(output)
         this.pan = Some(pan)
       })
       this
     }
 
     def pan(panValue: (Double, Double, Double, Double), staticOutputBus: Int): Note = {
-      audio.map(a => {
+      audio.foreach(a => {
         val panControl = threeBlock(lengths = lengths, vals = panValue)  
         val pan = panning(a, panControl)
           .addAction(TAIL_ACTION)
@@ -185,7 +193,7 @@ object ModuleMusic3 {
     }
 
     def play(implicit client: SuperColliderClient): Unit = {
-      pan.map(p => {
+      pan.foreach(p => {
         val graph = p.buildGraph(startTime, duration, p.graph(Seq()))
         client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
       })
@@ -214,7 +222,9 @@ object ModuleMusic3 {
   Spectrum 2 Vector((0.3535534,0), (1.0,1), (1.6464467,2), (2.2928932,3), (2.9393399,4), (3.5857866,5), (4.232233,6), (4.8786798,7), (5.5251265,8), (6.1715727,9), (6.81802,10), (7.464466,11), (8.110912,12), (8.7573595,13), (9.403806,14), (10.050253,15), (10.696699,16), (11.343146,17), (11.989593,18), (12.63604,19), (13.282487,20), (13.928933,21), (14.575379,22), (15.221826,23), (15.868272,24), (16.514719,25), (17.161165,26), (17.807613,27), (18.45406,28), (19.100506,29), (19.746952,30), (20.3934,31), (21.039846,32), (21.686293,33), (22.332739,34), (22.979187,35), (23.625631,36), (24.27208,37), (24.918528,38), (25.564972,39), (26.21142,40), (26.857864,41), (27.504313,42), (28.15076,43), (28.797205,44), (29.443653,45), (30.090097,46), (30.736546,47), (31.38299,48), (32.029438,49))
   Spectrum3 Vector((0.21473724,0), (0.6073686,1), (1.0,2), (1.3926313,3), (1.7852627,4), (2.177894,5), (2.5705254,6), (2.963157,7), (3.3557882,8), (3.7484195,9), (4.1410513,10), (4.5336823,11), (4.9263134,12), (5.3189454,13), (5.7115765,14), (6.104208,15), (6.496839,16), (6.8894706,17), (7.2821016,18), (7.6747336,19), (8.067365,20), (8.459996,21), (8.852628,22), (9.245258,23), (9.63789,24), (10.030522,25), (10.423153,26), (10.815784,27), (11.208416,28), (11.601047,29), (11.993679,30), (12.38631,31), (12.778941,32), (13.171573,33), (13.564204,34), (13.956836,35), (14.349466,36), (14.742098,37), (15.13473,38), (15.527361,39), (15.919992,40), (16.312624,41), (16.705256,42), (17.097887,43), (17.490519,44), (17.88315,45), (18.27578,46), (18.668411,47), (19.061043,48), (19.453674,49))
   */
-  def exposition1(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def exposition1(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition1 at startTime $startTime ")
     val spectrum = spectrums.head
     val fact = facts.head
@@ -232,42 +242,89 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.05, 0.05, 0.1, 0.001))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.03, 0.06, 0.08, 0.001))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5)  * 0.99, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.005, 0.02, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.005, 0.01, 0.01, 0.005))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
-      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
       .bandPass(
-        lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
+        lowerFreq = (spectrum.head, spectrum.head, spectrum.head, spectrum.head),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
-      .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))  
-      .pan(panValue = (-0.8, 0, 0, 0.8), output = delayAudioBus)
-      .play 
+      .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))
+      .pan(panValue = (-0.8, 0, 0, 0.8), output = delayAudioBus1)
+      .play
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
-      .pulse(ampValue = (0.6, 0.5), freq = (spectrum3(0) / 11, (spectrum3(1) / 11) * 1.004, (spectrum3(1) / 11) * 0.997, spectrum3(2) / 11), startValue = 0.1)
+      .pulse(ampValue = (0.6, 0.5), freq = (spectrum3.head / 11, (spectrum3(1) / 11) * 1.004, (spectrum3(1) / 11) * 0.997, spectrum3(2) / 11), startValue = 0.1)
       .bandPass(
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))
-      .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))  
-      .pan(panValue = (0, 0.5, -0.5, 0), output = delayAudioBus)
+      .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))
+      .pan(panValue = (0, 0.5, -0.5, 0), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
-      .pulse(ampValue = (0.8, 0.9), freq = (spectrum3(0) / 11, spectrum3(1) / 11 * 0.997, (spectrum3(1) / 11) * 1.004, spectrum3(2) / 11), startValue = 0.1)
+      .pulse(ampValue = (0.8, 0.9), freq = (spectrum3.head / 11, spectrum3(1) / 11 * 0.997, (spectrum3(1) / 11) * 1.004, spectrum3(2) / 11), startValue = 0.1)
       .bandPass(
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))
-      .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6, -0.3, 0.3, -0.6), output = delayAudioBus)
-      .play 
+      .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))
+      .pan(panValue = (0.6, -0.3, 0.3, -0.6), output = delayAudioBus3)
+      .play
+
+    val subSeq = spectrum2(49)
+    println(s"sub seq $subSeq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(spectrum2(49))
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -283,7 +340,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 2)
+       .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -291,7 +348,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8, 0, 0, 0.8), 2)
+       .pan(panValue = (-0.8, 0, 0, 0.8), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -299,7 +356,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 2)
+      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 12)
       .play  
       
   
@@ -309,7 +366,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 4)
+      .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 14)
       .play    
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -317,7 +374,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8, 0, 0, 0.8), 4)
+      .pan(panValue = (-0.8, 0, 0, 0.8), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -325,7 +382,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 4)
+      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -333,7 +390,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0, 0, 0, 0), 4)
+      .pan(panValue = (0, 0, 0, 0), 20)
       .play 
 
     // Lower theme
@@ -342,7 +399,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5, 0.5, -0.5, -0.5), 6)
+      .pan(panValue = (0.5, 0.5, -0.5, -0.5), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -350,11 +407,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8, 0, 0, 0.8), 6)
+      .pan(panValue = (-0.8, 0, 0, 0.8), 24)
       .play 
   }
 
-  def exposition2(startTime: Double = 0)(implicit client: SuperColliderClient): Unit = {
+  def exposition2(startTime: Double = 0, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition2 at startTime $startTime")
     val spectrum = spectrums(1)
     val fact = facts(1)
@@ -372,15 +431,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1, 0.2), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -388,7 +483,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))    
-      .pan(panValue = (-0.8, 0, 0, 0.8), output = delayAudioBus)
+      .pan(panValue = (-0.8, 0, 0, 0.8), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -397,7 +492,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17))) 
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))      
-      .pan(panValue = (0, 0.5, -0.5, 0), output = delayAudioBus)
+      .pan(panValue = (0, 0.5, -0.5, 0), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -406,8 +501,17 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49))) 
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))      
-      .pan(panValue = (0.6, -0.3, 0.3, -0.6), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6, -0.3, 0.3, -0.6), output = delayAudioBus3)
+      .play
+
+    val subFreq = spectrum2(49) * (spectrum(1) / spectrum.head)
+    println(s"sub freq $subFreq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(spectrum2(49))
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
+
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -423,7 +527,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 2)
+       .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -431,7 +535,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8, 0, 0, 0.8), 2)
+       .pan(panValue = (-0.8, 0, 0, 0.8), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -439,7 +543,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 2)
+      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 12)
       .play  
       
   
@@ -449,7 +553,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 4)
+      .pan(panValue = (-0.5, -0.5, -0.5, -0.5), 14)
       .play    
 
 
@@ -458,7 +562,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8, 0, 0, 0.8), 4)
+      .pan(panValue = (-0.8, 0, 0, 0.8), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -466,7 +570,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 4)
+      .pan(panValue = (0.5, 0.5, 0.5, 0.5), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -474,7 +578,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0, 0, 0, 0), 4)
+      .pan(panValue = (0, 0, 0, 0), 20)
       .play 
 
     // Lower theme
@@ -483,7 +587,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5, 0.5, -0.5, -0.5), 6)
+      .pan(panValue = (0.5, 0.5, -0.5, -0.5), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -491,11 +595,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8, 0, 0, 0.8), 6)
+      .pan(panValue = (-0.8, 0, 0, 0.8), 24)
       .play 
   }
 
-  def exposition3(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def exposition3(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition3 at startTime $startTime ")
     val spectrum = spectrums(2)
     val fact = facts(2)
@@ -513,15 +619,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.05, 0.03, 0.001))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1, 0.2), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -529,7 +671,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8, 0, 0, 0.8), output = delayAudioBus)
+      .pan(panValue = (-0.8, 0, 0, 0.8), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -538,7 +680,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0, 0.5, -0.5, 0), output = delayAudioBus)
+      .pan(panValue = (0, 0.5, -0.5, 0), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -547,8 +689,16 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6, -0.3, 0.3, -0.6), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6, -0.3, 0.3, -0.6), output = delayAudioBus3)
+      .play
+
+    val subFreq = spectrum2(49) * (spectrum(1) / spectrum.head)
+    println(s"sub freq $subFreq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(subFreq)
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -564,7 +714,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -572,7 +722,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -580,7 +730,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 12)
       .play  
       
   
@@ -590,7 +740,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 14)
       .play    
 
 
@@ -599,7 +749,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -607,7 +757,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -615,7 +765,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f), 4)
+      .pan(panValue = (0f, 0f, 0f, 0f), 20)
       .play 
 
     // Lower theme
@@ -624,7 +774,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -632,11 +782,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 24)
       .play 
   }
 
-  def exposition4(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def exposition4(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition4 at startTime $startTime ")
     val spectrum = spectrums(3)
     val fact = facts(3)
@@ -654,15 +806,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1f, 0.2f), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -670,7 +858,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -679,7 +867,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -688,8 +876,16 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus3)
+      .play
+
+    val subFreq = spectrum2(49)
+    println(s"sub freq $subFreq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(subFreq)
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -704,7 +900,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -712,7 +908,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -720,7 +916,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 12)
       .play  
       
   
@@ -730,7 +926,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 14)
       .play    
 
 
@@ -739,7 +935,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -747,7 +943,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -755,7 +951,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f), 4)
+      .pan(panValue = (0f, 0f, 0f, 0f), 20)
       .play 
 
     // Lower theme
@@ -764,7 +960,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -772,11 +968,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 24)
       .play 
   }
 
-  def exposition5(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def exposition5(startTime: Double = 0, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition5 at startTime $startTime ")
     val spectrum = spectrums(4)
     val fact = facts(4)
@@ -794,15 +992,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1f, 0.2f), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -810,7 +1044,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -819,7 +1053,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -828,8 +1062,16 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus3)
+      .play
+
+    val subFreq = spectrum2(49)
+    println(s"sub freq $subFreq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(subFreq)
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -844,7 +1086,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -852,7 +1094,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -860,7 +1102,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 12)
       .play  
       
   
@@ -870,7 +1112,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 14)
       .play    
 
 
@@ -879,7 +1121,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -887,7 +1129,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -895,7 +1137,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f), 4)
+      .pan(panValue = (0f, 0f, 0f, 0f), 20)
       .play 
 
     // Lower theme
@@ -904,7 +1146,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -912,11 +1154,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 24)
       .play 
   }
 
-  def exposition6(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def exposition6(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition6 at startTime $startTime ")
     val spectrum = spectrums(5)
     val fact = facts(5)
@@ -934,15 +1178,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1f, 0.2f), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -950,7 +1230,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -959,7 +1239,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -968,8 +1248,16 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus3)
+      .play
+
+    val subFreq = spectrum2(49)
+    println(s"sub freq $subFreq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(subFreq)
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -984,7 +1272,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -992,7 +1280,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1000,7 +1288,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 12)
       .play  
       
   
@@ -1010,7 +1298,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 14)
       .play    
 
 
@@ -1019,7 +1307,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1027,7 +1315,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1035,7 +1323,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f), 4)
+      .pan(panValue = (0f, 0f, 0f, 0f), 20)
       .play 
 
     // Lower theme
@@ -1044,7 +1332,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -1052,11 +1340,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 24)
       .play 
   }
 
-  def exposition7(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def exposition7(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition7 at startTime $startTime ")
     val spectrum = spectrums(6)
     val fact = facts(6)
@@ -1074,15 +1364,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1f, 0.2f), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -1090,7 +1416,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))     
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -1099,7 +1425,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))   
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))    
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -1108,8 +1434,16 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))   
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus3)
+      .play
+
+    val subFreq = spectrum2(49)
+    println(s"sub freq $subFreq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(subFreq)
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
 
     // Middle theme
     val longDurationDivision = duration / 4
@@ -1124,7 +1458,7 @@ object ModuleMusic3 {
           modFreq =   (spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact, spectrum(3) * fact),
           carrierFreq = (spectrum(3), spectrum(3), spectrum(3), spectrum(3)),
           modAmount = (100, 300, 3000, 300))
-       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 2)
+       .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 8)
        .play
 
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 1, middleThemePulse * 5, middleThemePulse * 2))
@@ -1132,7 +1466,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact, spectrum(4) * fact),
           carrierFreq = (spectrum(4), spectrum(4), spectrum(4), spectrum(4)),
           modAmount = (100, 2000, 500, 100))   
-       .pan(panValue = (-0.8f, 0, 0, 0.8f), 2)
+       .pan(panValue = (-0.8f, 0, 0, 0.8f), 10)
        .play  
        
     Note(startTime = longStartTimes.head, duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1140,7 +1474,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact, spectrum(5) * fact),
           carrierFreq = (spectrum(5), spectrum(5), spectrum(5), spectrum(5)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 2)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 12)
       .play  
       
   
@@ -1150,7 +1484,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact, spectrum(6) * fact),
           carrierFreq = (spectrum(6), spectrum(6), spectrum(6), spectrum(6)),
           modAmount = (100, 300, 3000, 300))
-      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 4)
+      .pan(panValue = (-0.5f, -0.5f, -0.5f, -0.5f), 14)
       .play    
 
 
@@ -1159,7 +1493,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact, spectrum(9) * fact),
           carrierFreq = (spectrum(9), spectrum(9), spectrum(9), spectrum(9)),
           modAmount = (100, 2000, 500, 100))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 4)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 16)
       .play
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1167,7 +1501,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact, spectrum(12) * fact),
           carrierFreq = (spectrum(12), spectrum(12), spectrum(12), spectrum(12)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 4)
+      .pan(panValue = (0.5f, 0.5f, 0.5f, 0.5f), 18)
       .play  
 
     Note(startTime = longStartTimes(1), duration = middleThemeDuration, lengths = (middleThemePulse * 2, middleThemePulse * 5, middleThemePulse * 1))
@@ -1175,7 +1509,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact, spectrum(15) * fact),
           carrierFreq = (spectrum(15), spectrum(15), spectrum(15), spectrum(15)),
           modAmount = (100, 500, 3000, 300))
-      .pan(panValue = (0f, 0f, 0f, 0f), 4)
+      .pan(panValue = (0f, 0f, 0f, 0f), 20)
       .play 
 
     // Lower theme
@@ -1184,7 +1518,7 @@ object ModuleMusic3 {
           modFreq = (spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact, spectrum(0) * fact),
           carrierFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
           modAmount = (100, 300, 2000, 200))
-      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 6)
+      .pan(panValue = (0.5f, 0.5f, -0.5f, -0.5f), 22)
       .play    
 
     Note(startTime = longStartTimes(2), duration = middleThemeDuration, lengths = (middleThemePulse * 3, middleThemePulse * 4, middleThemePulse * 1))
@@ -1192,11 +1526,13 @@ object ModuleMusic3 {
           modFreq = (spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact, spectrum(1) * fact),
           carrierFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)),
           modAmount = (100, 2000, 500, 200))
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), 6)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), 24)
       .play 
   }
 
-  def development11(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def development11(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development11 at startTime $startTime ")
     val spectrum = spectrums.head
     val fact = facts.head
@@ -1458,7 +1794,9 @@ object ModuleMusic3 {
     
   }
 
-  def development12(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def development12(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development12 at startTime $startTime ")
     val spectrum = spectrums(4)
     val fact = facts(4)
@@ -1718,7 +2056,9 @@ object ModuleMusic3 {
     development13(development13startTime)  
   }
 
-  def development13(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def development13(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development13 at startTime $startTime ")
     val spectrum = spectrums(5)
     val fact = facts(5)
@@ -1952,7 +2292,9 @@ object ModuleMusic3 {
     development14(development14startTime)    
   }
 
-  def development14(startTime: Double = 0)(implicit client: SuperColliderClient): Unit = {
+  def development14(startTime: Double = 0, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development14 at startTime $startTime ")
     val spectrum = spectrums(1)
     val fact = facts(1)
@@ -2101,7 +2443,9 @@ object ModuleMusic3 {
   }
 
 
-  def development15(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def development15(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development15 at startTime $startTime ")
     val spectrum = spectrums(2)
     val fact = facts(2)
@@ -2249,7 +2593,9 @@ object ModuleMusic3 {
     development16(development16startTime)    
   }
 
-  def development16(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def development16(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development16 at startTime $startTime ")
     val spectrum = spectrums(3)
     val fact = facts(3)
@@ -2397,7 +2743,9 @@ object ModuleMusic3 {
     development17(development17startTime)      
   }
 
-  def development17(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def development17(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Development17 at startTime $startTime")
     val spectrum = spectrums(6)
     val fact = facts(6)
@@ -2543,7 +2891,9 @@ object ModuleMusic3 {
   }
 
 
-  def recapitulation(startTime: Double = 0f)(implicit client: SuperColliderClient): Unit = {
+  def recapitulation(startTime: Double = 0f, reset: Boolean = true): Unit = {
+    if(reset) client.resetClock
+
     println(s"Exposition1 at startTime $startTime ")
     val spectrum = spectrums.head
     val fact = facts.head
@@ -2561,15 +2911,51 @@ object ModuleMusic3 {
     val pulseDurationDivision = duration / 34
     val pulseLengths = (pulseDurationDivision, pulseDurationDivision * 32, pulseDurationDivision)
 
-    val delayAudioBus = staticAudioBus()
-    val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
-    val delay = stereoDelay(delayAudioBus, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
-      .withNrOfChannels(2)
-      .addAction(TAIL_ACTION)
-      .nodeId(EFFECT)
-    delay.getOutputBus.staticBus(getRealOutputBus(0))
-    val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
-    client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    val delayAudioBus1 = staticAudioBus()
+    val delayAudioBus2 = staticAudioBus()
+    val delayAudioBus3 = staticAudioBus()
+    val delayAudioBus4 = staticAudioBus()
+
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(0))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(2))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(4))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
+    {
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
+        .withNrOfChannels(2)
+        .addAction(TAIL_ACTION)
+        .nodeId(EFFECT)
+      delay.getOutputBus.staticBus(getRealOutputBus(6))
+      val graph = delay.buildGraph(startTime, duration, delay.graph(Seq()))
+      client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
+    }
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
       .pulse(ampValue = (0.1f, 0.2f), freq = (spectrum3(0) / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
@@ -2577,7 +2963,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(0), spectrum(0), spectrum(0), spectrum(0)),
         higherFreq = (spectrum(1), spectrum(1), spectrum(1), spectrum(1)))
       .ring(ringModFreq = (spectrum(2), spectrum(2), spectrum(2), spectrum(2)))  
-      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus)
+      .pan(panValue = (-0.8f, 0, 0, 0.8f), output = delayAudioBus1)
       .play 
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -2586,7 +2972,7 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(8), spectrum(9), spectrum(9), spectrum(8)), 
         higherFreq = (spectrum(17), spectrum(14), spectrum(14), spectrum(17)))
       .ring(ringModFreq = (spectrum(11), spectrum(11), spectrum(11), spectrum(11)))  
-      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus)
+      .pan(panValue = (0f, 0.5f, -0.5f, 0f), output = delayAudioBus2)
       .play       
 
     Note(startTime = startTime, duration = duration, lengths = pulseLengths)
@@ -2595,8 +2981,16 @@ object ModuleMusic3 {
         lowerFreq = (spectrum(38), spectrum(39), spectrum(39), spectrum(38)), 
         higherFreq = (spectrum(49), spectrum(48), spectrum(48), spectrum(49)))
       .ring(ringModFreq = (spectrum(42), spectrum(42), spectrum(42), spectrum(42)))    
-      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus)
-      .play 
+      .pan(panValue = (0.6f, -0.3f, 0.3f, -0.6f), output = delayAudioBus3)
+      .play
+
+    val subSeq = spectrum2(49)
+    println(s"sub seq $subSeq")
+    Note(startTime = startTime, duration = duration, lengths = pulseLengths)
+      .pulse(ampValue = (0.1, 0.2), freq = (spectrum3.head / 11, spectrum3(1) / 11, spectrum3(1) / 11, spectrum3(2) / 11), startValue = 0.1f)
+      .sineSub(spectrum2(49))
+      .pan(panValue = (0.4, 0.2, -0.2, 0.4), output = delayAudioBus4)
+      .play
   }
 
   def playExposition(startTime: Double = 0, reset: Boolean = true): Unit = {
@@ -2613,24 +3007,24 @@ object ModuleMusic3 {
 
     println(s"Start times $startTimes")
   
-    exposition1(startTimes.head)
-    exposition2(startTimes(1))
-    exposition3(startTimes(2))
-    exposition4(startTimes(3)) 
-    exposition5(startTimes(4)) 
-    exposition6(startTimes(5))
-    exposition7(startTimes(6))
+    exposition1(startTimes.head, false)
+    exposition2(startTimes(1), false)
+    exposition3(startTimes(2), false)
+    exposition4(startTimes(3), false)
+    exposition5(startTimes(4), false)
+    exposition6(startTimes(5), false)
+    exposition7(startTimes(6), false)
   }
 
   def playDevelopment(startTime: Double = 0, reset: Boolean = true): Unit = {
     if(reset) client.resetClock
 
-    development11(startTime)
+    development11(startTime, false)
   }
 
   def playRecapitulation(startTime: Double = 0, reset: Boolean = true): Unit = {
     if(reset) client.resetClock
 
-    recapitulation(startTime)
+    recapitulation(startTime, false)
   }
 }
