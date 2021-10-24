@@ -249,7 +249,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus().withNrOfChannels(2)
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.05, 0.05, 0.1, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.05, 0.1, 0.1, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -260,7 +260,7 @@ object ModuleMusic3 {
     }
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.03, 0.06, 0.08, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.06, 0.6, 0.6, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5)  * 0.99, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -271,7 +271,7 @@ object ModuleMusic3 {
     }
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.005, 0.02, 0.03, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (2.7, 2.8, 2.8, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -282,7 +282,7 @@ object ModuleMusic3 {
     }
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.005, 0.01, 0.01, 0.005))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.015, 0.025, 0.02, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -448,7 +448,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.15, 0.25, 0.15, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.2, 0.35, 0.35, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -458,7 +458,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.03, 0.02, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (1.5, 1.8, 1.8, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -468,7 +468,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.006, 0.01, 0.01, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.025, 0.035, 0.025, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -626,7 +626,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus().withNrOfChannels(2)
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.1, 0.3, 0.2, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.2, 0.3, 0.2, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -636,7 +636,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.1, 0.3, 0.2, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.3, 0.4, 0.4, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -646,7 +646,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.04, 0.03, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (1.8, 1.9, 1.9, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -656,7 +656,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.006, 0.01, 0.01, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.03, 0.04, 0.03, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -813,7 +813,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus().withNrOfChannels(2)
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.07f, 0.1f, 0.08f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.09, 0.12, 0.12, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -823,7 +823,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.1f, 0.13f, 0.1f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.3, 0.4, 0.4, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -833,7 +833,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.01f, 0.03f, 0.02f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (2.0, 2.2, 2.2, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -843,7 +843,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.006, 0.01, 0.01, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.03, 0.03, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -999,7 +999,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus().withNrOfChannels(2)
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.05, 0.1, 0.1, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.08, 0.09, 0.09, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1009,7 +1009,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.05, 0.1, 0.1, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.6, 0.7, 0.7, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1019,7 +1019,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.03, 0.02, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (3.6, 3.7, 3.7, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1029,7 +1029,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.006, 0.01, 0.005, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.01, 0.02, 0.02, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1185,7 +1185,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus().withNrOfChannels(2)
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.08, 0.1, 0.1, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.04, 0.14, 0.14, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1195,7 +1195,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.08, 0.1, 0.1, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.6, 0.7, 0.7, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1205,7 +1205,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.03, 0.02, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (3.6, 3.7, 3.7, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1215,7 +1215,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.006, 0.01, 0.005, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.015, 0.025, 0.025, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1371,7 +1371,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus().withNrOfChannels(2)
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.06, 0.11, 0.1, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.04, 0.14, 0.14, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1381,7 +1381,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.09, 0.13, 0.11, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.4, 0.5, 0.5, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5) * 0.99, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1391,7 +1391,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02, 0.03, 0.02, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (3.0, 3.1, 3.1, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5) * 1.01, decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -1401,7 +1401,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.006, 0.01, 0.005, 0.001))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.018, 0.028, 0.025, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -2918,7 +2918,7 @@ object ModuleMusic3 {
     val delayAudioBus4 = staticAudioBus()
 
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.05, 0.1, 0.1, 0.001))
       val delay = stereoDelay(delayAudioBus1, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -2928,7 +2928,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.06, 0.6, 0.6, 0.001))
       val delay = stereoDelay(delayAudioBus2, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -2938,7 +2938,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (2.7, 2.8, 2.8, 0.001))
       val delay = stereoDelay(delayAudioBus3, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
@@ -2948,7 +2948,7 @@ object ModuleMusic3 {
       client.send(client.newBundle(absoluteTimeToMillis(startTime), graph))
     }
     {
-      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.02f, 0.05f, 0.03f, 0.001f))
+      val delayAmp = threeBlock(lengths = pulseLengths, vals = (0.01, 0.02, 0.02, 0.001))
       val delay = stereoDelay(delayAudioBus4, delayAmp, delayTime = spectrum3(5), decayTime = spectrum3(10))
         .withNrOfChannels(2)
         .addAction(TAIL_ACTION)
